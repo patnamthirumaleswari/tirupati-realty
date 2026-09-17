@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Palette grounded in Tirupati's own materials: granite dust, the
+     Kapila Teertham tank, weathered brick — not a generic SaaS default. */
+  --color-bg: #edeee7;
+  --color-ink: #23211d;
+  --color-ink-soft: #56534b;
+  --color-teal: #2f6b62;
+  --color-teal-deep: #1b4640;
+  --color-brick: #9c3f2b;
+  --color-sand: #dad5c4;
+  --color-gold: #c89b3c;
+  --color-surface: #f7f6f1;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-work-sans), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
 }
