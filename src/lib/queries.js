@@ -302,3 +302,48 @@ export async function setAmenityActive(id, is_active) {
 
   if (error) throw error;
 }
+
+// --- Reports / moderation queue ---
+
+// Any logged-in user can report a listing. RLS requires auth.uid() is not
+// null for this insert — an anonymous visitor gets an error, so the UI
+// should only offer this to logged-in users.
+export async function createReport({ listingId, reason }) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('You must be logged in to report a listing.');
+
+  const { error } = await supabase.from('reports').insert({
+    listing_id: listingId,
+    reporter_id: user.id,
+    reason,
+  });
+
+  if (error) throw error;
+}
+
+// Open reports, for the admin moderation queue.
+export async function getOpenReports() {
+  const { data, error } = await supabase
+    .from('reports')
+    .select(
+      `id, reason, status, created_at,
+       listing:listings(id, title, status),
+       reporter:profiles!reports_reporter_id_fkey(full_name)`
+    )
+    .eq('status', 'open')
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+// Admin resolves a report: 'reviewed' (looked at, no action needed),
+// 'dismissed' (not a valid complaint), or 'actioned' (something was done
+// about it, e.g. the listing was also rejected separately).
+export async function setReportStatus(id, status) {
+  const { error } = await supabase.from('reports').update({ status }).eq('id', id);
+  if (error) throw error;
+}

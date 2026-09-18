@@ -1,6 +1,7 @@
 import { getListingById } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import ContactOwnerForm from '@/app/components/ContactOwnerForm';
+import ReportListingButton from '@/app/components/ReportListingButton';
 
 // Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
 // route must explicitly opt into the Edge Runtime.
@@ -125,6 +126,10 @@ export default async function ListingDetailPage({ params }) {
           <div className="mt-4 border border-[var(--color-sand)] p-4">
             <h2 className="font-display mb-3 text-lg">Contact owner</h2>
             <ContactOwnerForm listingId={listing.id} />
+          </div>
+
+          <div className="mt-4">
+            <ReportListingButton listingId={listing.id} />
           </div>
         </div>
       </div>
