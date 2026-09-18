@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthProvider';
@@ -18,7 +18,7 @@ const STATUS_LABELS = {
   rejected: 'Rejected',
 };
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,5 +115,16 @@ export default function DashboardPage() {
         Log out
       </button>
     </main>
+  );
+}
+
+// useSearchParams() (used above, to read ?submitted=...) requires a
+// Suspense boundary during static prerendering — Next.js build fails
+// without this wrapper.
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardContent />
+    </Suspense>
   );
 }
