@@ -245,3 +245,60 @@ export async function createInquiry({ listingId, name, phone, message }) {
 
   if (error) throw error;
 }
+
+// --- Admin: localities & amenities management ---
+// These return ALL rows (active and inactive) when called by an admin —
+// RLS ("localities_select_active_or_admin" / "amenities_select_active_or_admin")
+// automatically restricts a non-admin caller to active rows only, so no
+// extra filtering is needed here.
+
+export async function adminGetLocalities() {
+  const { data, error } = await supabase
+    .from('localities')
+    .select('id, name, mandal, is_active')
+    .order('name');
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createLocality({ name, mandal }) {
+  const { error } = await supabase
+    .from('localities')
+    .insert({ name, mandal: mandal || null });
+
+  if (error) throw error;
+}
+
+export async function setLocalityActive(id, is_active) {
+  const { error } = await supabase
+    .from('localities')
+    .update({ is_active })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function adminGetAmenities() {
+  const { data, error } = await supabase
+    .from('amenities')
+    .select('id, name, is_active')
+    .order('name');
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createAmenity(name) {
+  const { error } = await supabase.from('amenities').insert({ name });
+  if (error) throw error;
+}
+
+export async function setAmenityActive(id, is_active) {
+  const { error } = await supabase
+    .from('amenities')
+    .update({ is_active })
+    .eq('id', id);
+
+  if (error) throw error;
+}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
 import { getMyProfile, getPendingListings, setListingStatus } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
+import AdminNav from '@/app/components/AdminNav';
 
 export default function AdminListingsPage() {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ export default function AdminListingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
+      <AdminNav />
       <h1 className="font-display text-3xl">Pending listings</h1>
       <p className="mt-2 text-[var(--color-ink-soft)]">
         Approve a listing to make it publicly searchable, or reject it.
