@@ -2,6 +2,10 @@ import { getListingById } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import ContactOwnerForm from '@/app/components/ContactOwnerForm';
 
+// Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
+// route must explicitly opt into the Edge Runtime.
+export const runtime = 'edge';
+
 export default async function ListingDetailPage({ params }) {
   const { id } = await params;
   const listing = await getListingById(id);

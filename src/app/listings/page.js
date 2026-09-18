@@ -1,6 +1,10 @@
 import { getLocalities, searchListings } from '@/lib/queries';
 import ListingCard from '@/app/components/ListingCard';
 
+// Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
+// route must explicitly opt into the Edge Runtime.
+export const runtime = 'edge';
+
 export const metadata = {
   title: 'Search listings — Tirupati Realty',
 };
