@@ -8,15 +8,15 @@ export default function ListingCard({ listing }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group border border-[var(--color-sand)] bg-[var(--color-surface)]"
+      className="group block border border-[var(--color-sand)] bg-[var(--color-surface)] transition-shadow hover:shadow-md"
     >
-      <div className="aspect-[4/3] bg-[var(--color-sand)]">
+      <div className="aspect-[4/3] overflow-hidden bg-[var(--color-sand)]">
         {cover?.r2_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={cover.r2_url}
             alt={listing.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
       </div>

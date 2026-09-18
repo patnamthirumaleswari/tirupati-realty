@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette grounded in Tirupati's own materials: granite dust, the
-     Kapila Teertham tank, weathered brick — not a generic SaaS default. */
-  --color-bg: #edeee7;
-  --color-ink: #23211d;
-  --color-ink-soft: #56534b;
-  --color-teal: #2f6b62;
-  --color-teal-deep: #1b4640;
-  --color-brick: #9c3f2b;
-  --color-sand: #dad5c4;
-  --color-gold: #c89b3c;
-  --color-surface: #f7f6f1;
+  /* Same grounding (Tirupati's granite, the temple tank, local materials),
+     pushed to a brighter, more energetic register. */
+  --color-bg: #f4f8f6;
+  --color-ink: #16211c;
+  --color-ink-soft: #4f6459;
+  --color-teal: #0fa98f;
+  --color-teal-deep: #067a66;
+  --color-brick: #ff6b45;
+  --color-sand: #dce6de;
+  --color-gold: #ffb627;
+  --color-surface: #ffffff;
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-body: var(--font-work-sans), system-ui, sans-serif;

@@ -26,12 +26,13 @@ function DashboardContent() {
 
   const [myListings, setMyListings] = useState([]);
   const [listingsLoading, setListingsLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !loggingOut) {
       router.push('/login');
     }
-  }, [loading, user, router]);
+  }, [loading, user, loggingOut, router]);
 
   useEffect(() => {
     if (user) {
@@ -42,6 +43,7 @@ function DashboardContent() {
   }, [user]);
 
   async function handleLogout() {
+    setLoggingOut(true);
     await supabase.auth.signOut();
     router.push('/');
   }
