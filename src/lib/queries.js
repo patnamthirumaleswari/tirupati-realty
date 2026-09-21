@@ -12,9 +12,12 @@ export async function getLocalities() {
   return data;
 }
 
-// Live listings filtered by locality/type/purpose — used by /listings.
-// Any filter left out (undefined/empty string) is simply not applied.
-export async function searchListings({ locality, type, purpose } = {}) {
+// Live listings filtered by locality/type/purpose/price — used by
+// /listings. Locality/type/purpose each accept a single value OR an array
+// (multi-select checkboxes); anything left out/empty is simply not
+// applied. Price range only ever filters the `price` column (sale/lease
+// listings) — rent_amount isn't included, to keep this simple for now.
+export async function searchListings({ locality, type, purpose, minPrice, maxPrice } = {}) {
   let query = supabase
     .from('listings')
     .select(
@@ -25,9 +28,23 @@ export async function searchListings({ locality, type, purpose } = {}) {
     .eq('status', 'live')
     .order('created_at', { ascending: false });
 
-  if (locality) query = query.eq('locality_id', locality);
-  if (type) query = query.eq('type', type);
-  if (purpose) query = query.eq('purpose', purpose);
+  const asArray = (v) => (v == null || v === '' ? [] : Array.isArray(v) ? v : [v]);
+
+  const localities = asArray(locality);
+  const types = asArray(type);
+  const purposes = asArray(purpose);
+
+  if (localities.length === 1) query = query.eq('locality_id', localities[0]);
+  else if (localities.length > 1) query = query.in('locality_id', localities);
+
+  if (types.length === 1) query = query.eq('type', types[0]);
+  else if (types.length > 1) query = query.in('type', types);
+
+  if (purposes.length === 1) query = query.eq('purpose', purposes[0]);
+  else if (purposes.length > 1) query = query.in('purpose', purposes);
+
+  if (minPrice) query = query.gte('price', Number(minPrice));
+  if (maxPrice) query = query.lte('price', Number(maxPrice));
 
   const { data, error } = await query;
   if (error) throw error;
