@@ -5,7 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
-import { getMyListings, getMyFavoriteListings, getMyPhone, updateMyPhone } from '@/lib/queries';
+import {
+  getMyListings,
+  getMyFavoriteListings,
+  getMyPhone,
+  updateMyPhone,
+  getMyLeads,
+  getMyPhoneRevealCounts,
+  getMyInquiryCounts,
+} from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import ListingCard from '@/app/components/ListingCard';
 
@@ -19,6 +27,16 @@ const STATUS_LABELS = {
   rejected: 'Rejected',
 };
 
+function timeAgo(dateStr) {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 function DashboardContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -30,6 +48,10 @@ function DashboardContent() {
   const [listingsLoading, setListingsLoading] = useState(true);
   const [myFavorites, setMyFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [myLeads, setMyLeads] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(true);
+  const [revealCounts, setRevealCounts] = useState({});
+  const [inquiryCounts, setInquiryCounts] = useState({});
   const [loggingOut, setLoggingOut] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
@@ -50,6 +72,11 @@ function DashboardContent() {
       getMyFavoriteListings(user.id)
         .then(setMyFavorites)
         .finally(() => setFavoritesLoading(false));
+      getMyLeads(user.id)
+        .then(setMyLeads)
+        .finally(() => setLeadsLoading(false));
+      getMyPhoneRevealCounts(user.id).then(setRevealCounts).catch(() => {});
+      getMyInquiryCounts(user.id).then(setInquiryCounts).catch(() => {});
       getMyPhone()
         .then((p) => {
           setPhone(p || '');
@@ -144,6 +171,16 @@ function DashboardContent() {
           My Listings <span className="ml-1 text-xs">{myListings.length}</span>
         </button>
         <button
+          onClick={() => setTab('leads')}
+          className={`px-4 py-2 text-sm font-semibold ${
+            tab === 'leads'
+              ? 'border-b-2 border-[var(--color-teal)] text-[var(--color-teal-deep)]'
+              : 'text-[var(--color-ink-soft)]'
+          }`}
+        >
+          My Leads <span className="ml-1 text-xs">{myLeads.length}</span>
+        </button>
+        <button
           onClick={() => setTab('favorites')}
           className={`px-4 py-2 text-sm font-semibold ${
             tab === 'favorites'
@@ -183,10 +220,54 @@ function DashboardContent() {
                     <p className="text-sm text-[var(--color-ink-soft)]">
                       {listing.locality?.name} · {formatPrice(listing)}
                     </p>
+                    <p className="mt-1 text-xs text-[var(--color-ink-softer)]">
+                      {inquiryCounts[listing.id] || 0} inquiries · {revealCounts[listing.id] || 0} phone reveals
+                    </p>
                   </div>
                   <span className="rounded-full border border-[var(--color-sand)] px-3 py-1 text-xs text-[var(--color-ink-soft)]">
                     {STATUS_LABELS[listing.status] || listing.status}
                   </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {tab === 'leads' && (
+        <div className="mt-6">
+          {leadsLoading ? (
+            <p className="text-sm text-[var(--color-ink-soft)]">Loading…</p>
+          ) : myLeads.length === 0 ? (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              No inquiries yet — they'll show up here as soon as someone
+              contacts you about one of your listings.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {myLeads.map((lead) => (
+                <li
+                  key={lead.id}
+                  className="rounded-xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-[var(--color-ink)]">{lead.sender_name}</p>
+                      <p className="text-sm text-[var(--color-ink-soft)]">{lead.sender_phone}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-[var(--color-ink-softer)]">
+                      {timeAgo(lead.created_at)}
+                    </span>
+                  </div>
+                  {lead.message && (
+                    <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{lead.message}</p>
+                  )}
+                  <Link
+                    href={`/listings/${lead.listing?.id}`}
+                    className="mt-2 inline-block text-xs font-semibold text-[var(--color-teal)] hover:underline"
+                  >
+                    About: {lead.listing?.title}
+                  </Link>
                 </li>
               ))}
             </ul>

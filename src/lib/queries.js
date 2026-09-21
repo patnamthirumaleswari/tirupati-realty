@@ -497,3 +497,56 @@ export async function updateMyPhone(phone) {
 
   if (error) throw error;
 }
+
+// --- My Leads (owner-facing inquiries + phone-reveal interest signal) ---
+
+// All inquiries received across every listing the current user owns,
+// newest first. RLS already restricts inquiries to the listing's own
+// owner (or admin), so this simply asks for "mine" via the join filter.
+export async function getMyLeads(userId) {
+  const { data, error } = await supabase
+    .from('inquiries')
+    .select(
+      `id, sender_name, sender_phone, message, created_at,
+       listing:listings!inner(id, title, owner_id)`
+    )
+    .eq('listing.owner_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+// Phone-reveal counts per listing, for the current user's own listings —
+// shown as a lightweight "how much interest" signal alongside inquiries.
+export async function getMyPhoneRevealCounts(userId) {
+  const { data, error } = await supabase
+    .from('phone_reveals')
+    .select(`listing_id, listing:listings!inner(owner_id)`)
+    .eq('listing.owner_id', userId);
+
+  if (error) throw error;
+
+  const counts = {};
+  for (const row of data) {
+    counts[row.listing_id] = (counts[row.listing_id] || 0) + 1;
+  }
+  return counts;
+}
+
+// Inquiry counts per listing, same pattern as above — used on "My
+// Listings" so each row shows how many inquiries it's received.
+export async function getMyInquiryCounts(userId) {
+  const { data, error } = await supabase
+    .from('inquiries')
+    .select(`listing_id, listing:listings!inner(owner_id)`)
+    .eq('listing.owner_id', userId);
+
+  if (error) throw error;
+
+  const counts = {};
+  for (const row of data) {
+    counts[row.listing_id] = (counts[row.listing_id] || 0) + 1;
+  }
+  return counts;
+}
