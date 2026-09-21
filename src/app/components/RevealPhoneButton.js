@@ -44,11 +44,10 @@ export default function RevealPhoneButton({ listingId }) {
           href={`https://wa.me/${toWhatsAppNumber(phone)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white"
-          style={{ background: 'var(--color-wa)' }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFF" stroke="none">
-            <path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.7.7.7-2.6-.2-.3A8 8 0 1 1 12 20z" />
+          <svg width="18" height="18" viewBox="0 0 32 32" fill="#FFF">
+            <path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.386.7 4.607 1.905 6.474L4 29l7.72-1.867A11.93 11.93 0 0 0 16.001 27C22.629 27 28 21.627 28 15S22.629 3 16.001 3zm6.994 17.06c-.294.828-1.463 1.516-2.4 1.716-.64.135-1.475.243-4.287-.921-3.598-1.49-5.914-5.146-6.095-5.386-.178-.24-1.454-1.937-1.454-3.695s.917-2.62 1.243-2.98c.325-.36.71-.45.947-.45.238 0 .474.002.681.012.219.01.512-.083.802.612.294.706 1 2.435 1.087 2.612.088.177.147.386.03.626-.118.24-.176.386-.353.593-.177.207-.372.462-.53.62-.176.176-.36.367-.155.72.206.353.914 1.508 1.964 2.44 1.35 1.198 2.487 1.569 2.842 1.745.354.177.56.148.767-.089.206-.238.883-1.03 1.12-1.383.235-.354.47-.294.796-.176.324.117 2.056.97 2.409 1.147.353.177.588.264.676.412.088.148.088.86-.206 1.688z" />
           </svg>
           Chat on WhatsApp
         </a>

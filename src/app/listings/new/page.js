@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
 import { getLocalities, getAmenities, createListing, uploadListingPhotos } from '@/lib/queries';
+import LocationPicker from '@/app/components/LocationPicker';
 
 const AREA_UNITS = ['sqft', 'acres', 'cents', 'guntas'];
 const FURNISHING_OPTIONS = ['unfurnished', 'semi_furnished', 'fully_furnished'];
@@ -26,6 +27,8 @@ export default function NewListingPage() {
     description: '',
     locality_id: '',
     landmark: '',
+    latitude: '',
+    longitude: '',
     price_on_request: false,
     price: '',
     rent_amount: '',
@@ -82,6 +85,8 @@ export default function NewListingPage() {
       description: form.description || null,
       locality_id: form.locality_id || null,
       landmark: form.landmark || null,
+      latitude: num(form.latitude),
+      longitude: num(form.longitude),
       price_on_request: form.price_on_request,
       price: form.purpose !== 'rent' ? num(form.price) : null,
       rent_amount: form.purpose === 'rent' ? num(form.rent_amount) : null,
@@ -212,6 +217,41 @@ export default function NewListingPage() {
               className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
             />
           </div>
+        </div>
+
+        {/* Map location (optional) */}
+        <div>
+          <p className="text-sm text-[var(--color-ink-soft)]">
+            Map location (optional) — click anywhere on the map to drop a
+            pin at the property's location, or drag the pin to adjust it.
+          </p>
+          <div className="mt-2">
+            <LocationPicker
+              lat={form.latitude ? Number(form.latitude) : null}
+              lng={form.longitude ? Number(form.longitude) : null}
+              onChange={(lat, lng) => {
+                update('latitude', lat);
+                update('longitude', lng);
+              }}
+            />
+          </div>
+          {form.latitude && form.longitude && (
+            <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-ink-softer)]">
+              <span>
+                Pin set at {Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  update('latitude', '');
+                  update('longitude', '');
+                }}
+                className="underline hover:text-[var(--color-brick)]"
+              >
+                Clear pin
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Price */}

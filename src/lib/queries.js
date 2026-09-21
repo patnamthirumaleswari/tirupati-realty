@@ -22,7 +22,8 @@ export async function searchListings({ locality, type, purpose, minPrice, maxPri
     .from('listings')
     .select(
       `id, title, type, purpose, price, price_on_request, rent_amount,
-       area_value, area_unit, bedrooms, locality:localities(id, name, mandal),
+       area_value, area_unit, bedrooms, latitude, longitude,
+       locality:localities(id, name, mandal),
        cover_image:listing_images(r2_url, is_cover)`
     )
     .eq('status', 'live')

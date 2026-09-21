@@ -1,5 +1,7 @@
 import { getLocalities, searchListings } from '@/lib/queries';
 import ListingCard from '@/app/components/ListingCard';
+import ListingsViewToggle from '@/app/components/ListingsViewToggle';
+import { formatPrice } from '@/lib/format';
 
 // Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
 // route must explicitly opt into the Edge Runtime.
@@ -165,11 +167,23 @@ export default async function ListingsPage({ searchParams }) {
                 approves them.
               </p>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {listings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
+              <ListingsViewToggle
+                pins={listings
+                  .filter((l) => l.latitude != null && l.longitude != null)
+                  .map((l) => ({
+                    id: l.id,
+                    title: l.title,
+                    lat: l.latitude,
+                    lng: l.longitude,
+                    priceLabel: formatPrice(l),
+                  }))}
+              >
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {listings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} />
+                  ))}
+                </div>
+              </ListingsViewToggle>
             )}
           </div>
         </div>
