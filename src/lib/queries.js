@@ -163,7 +163,7 @@ export async function getPendingListings() {
     .select(
       `id, title, type, purpose, price, price_on_request, rent_amount,
        area_value, area_unit, created_at, locality:localities(name),
-       owner:profiles!listings_owner_id_fkey(full_name, phone)`
+       owner:profiles!listings_owner_id_fkey(full_name)`
     )
     .eq('status', 'pending_approval')
     .order('created_at', { ascending: true });
@@ -214,7 +214,7 @@ export async function getListingById(id) {
        rent_amount, deposit_amount, area_value, area_unit, bedrooms,
        bathrooms, floor_number, total_floors, property_age_years,
        facing_direction, furnishing, plot_length, plot_width, road_width_ft,
-       is_approved_layout, landmark, status, created_at,
+       is_approved_layout, landmark, latitude, longitude, status, created_at,
        locality:localities(name, mandal),
        images:listing_images(r2_url, is_cover, sort_order),
        amenities:listing_amenities(amenity:amenities(name)),
@@ -345,5 +345,137 @@ export async function getOpenReports() {
 // about it, e.g. the listing was also rejected separately).
 export async function setReportStatus(id, status) {
   const { error } = await supabase.from('reports').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+// --- Real stats, used on the homepage instead of placeholder numbers ---
+
+export async function getLiveListingCount() {
+  const { count, error } = await supabase
+    .from('listings')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'live');
+
+  if (error) throw error;
+  return count || 0;
+}
+
+// Live listing count per locality — used on the "Popular localities" cards.
+// Fetched as one lightweight query and reduced client-side, which is fine
+// at this scale (a handful of localities, not millions of rows).
+export async function getListingCountsByLocality() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('locality_id')
+    .eq('status', 'live');
+
+  if (error) throw error;
+
+  const counts = {};
+  for (const row of data) {
+    if (row.locality_id) counts[row.locality_id] = (counts[row.locality_id] || 0) + 1;
+  }
+  return counts;
+}
+
+// --- Favorites ---
+
+export async function getMyFavoriteIds() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('favorites')
+    .select('listing_id')
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+  return data.map((row) => row.listing_id);
+}
+
+export async function addFavorite(listingId) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('You must be logged in to save favorites.');
+
+  const { error } = await supabase
+    .from('favorites')
+    .insert({ user_id: user.id, listing_id: listingId });
+
+  if (error) throw error;
+}
+
+export async function removeFavorite(listingId) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('You must be logged in to remove favorites.');
+
+  const { error } = await supabase
+    .from('favorites')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('listing_id', listingId);
+
+  if (error) throw error;
+}
+
+// Full listing cards for the dashboard's "My Favorites" tab.
+export async function getMyFavoriteListings(userId) {
+  const { data, error } = await supabase
+    .from('favorites')
+    .select(
+      `listing:listings(id, title, type, purpose, price, price_on_request, rent_amount,
+       locality:localities(name), cover_image:listing_images(r2_url, is_cover))`
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  // Each row wraps the listing under `listing` — unwrap, and drop any where
+  // the listing itself is no longer visible (e.g. was rejected since saving).
+  return data.map((row) => row.listing).filter(Boolean);
+}
+
+// Reveals a listing owner's phone number via the secure, logged
+// SECURITY DEFINER function — this is the ONLY sanctioned way to get a
+// phone number; the profiles table itself no longer allows selecting the
+// phone column directly (see 0005_phone_reveal.sql).
+export async function revealOwnerPhone(listingId) {
+  const { data, error } = await supabase.rpc('reveal_listing_owner_phone', {
+    p_listing_id: listingId,
+  });
+
+  if (error) throw error;
+  return data; // the phone number, as plain text
+}
+
+// Reads the current user's own phone via a dedicated secure function —
+// kept separate from getMyProfile() above, since a plain column SELECT
+// of `phone` is blocked entirely at the database level (see
+// 0005_phone_reveal.sql / 0007_fix_my_phone_access.sql).
+export async function getMyPhone() {
+  const { data, error } = await supabase.rpc('get_my_phone');
+  if (error) throw error;
+  return data;
+}
+
+// Updates the current user's own phone number. Column-level grants (see
+// 0005_phone_reveal.sql) explicitly allow authenticated users to update
+// their own phone column, alongside the existing row-level RLS policy.
+export async function updateMyPhone(phone) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('You must be logged in.');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ phone })
+    .eq('id', user.id);
+
   if (error) throw error;
 }

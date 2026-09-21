@@ -1,11 +1,37 @@
 import { getListingById } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
-import ContactOwnerForm from '@/app/components/ContactOwnerForm';
+import InquiryAccordion from '@/app/components/InquiryAccordion';
 import ReportListingButton from '@/app/components/ReportListingButton';
+import FavoriteButton from '@/app/components/FavoriteButton';
+import RevealPhoneButton from '@/app/components/RevealPhoneButton';
 
 // Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
 // route must explicitly opt into the Edge Runtime.
 export const runtime = 'edge';
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const listing = await getListingById(id);
+
+  if (!listing) {
+    return { title: 'Listing not found' };
+  }
+
+  const cover = listing.images?.find((img) => img.is_cover) || listing.images?.[0];
+  const description = `${listing.type === 'land' ? 'Land' : 'Apartment'} for ${
+    listing.purpose === 'rent' ? 'rent' : 'sale'
+  } in ${listing.locality?.name || 'Tirupati'} — ${formatPrice(listing)}.`;
+
+  return {
+    title: listing.title,
+    description,
+    openGraph: {
+      title: listing.title,
+      description,
+      images: cover?.r2_url ? [{ url: cover.r2_url }] : undefined,
+    },
+  };
+}
 
 export default async function ListingDetailPage({ params }) {
   const { id } = await params;
@@ -48,12 +74,15 @@ export default async function ListingDetailPage({ params }) {
             {' · '}
             {listing.type === 'land' ? 'Land' : 'Apartment'}
           </span>
-          <h1 className="font-display mt-1 text-3xl">{listing.title}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="font-display mt-1 text-3xl">{listing.title}</h1>
+            <FavoriteButton listingId={listing.id} className="shrink-0 border border-[var(--color-sand)] bg-[var(--color-surface)]" />
+          </div>
           <p className="mt-1 text-[var(--color-ink-soft)]">
             {listing.locality?.name}
             {listing.landmark ? ` · Near ${listing.landmark}` : ''}
           </p>
-          <p className="mt-3 text-2xl text-[var(--color-brick)]">{formatPrice(listing)}</p>
+          <p className="font-display mt-3 text-2xl font-semibold text-[var(--color-ink)]">{formatPrice(listing)}</p>
 
           {/* Key facts */}
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-[var(--color-sand)] py-4 text-sm">
@@ -106,6 +135,21 @@ export default async function ListingDetailPage({ params }) {
               </div>
             </div>
           )}
+
+          {listing.latitude != null && listing.longitude != null && (
+            <div className="mt-6">
+              <h2 className="font-display text-lg">Location</h2>
+              <div className="mt-2 aspect-video w-full overflow-hidden border border-[var(--color-sand)]">
+                <iframe
+                  title="Property location"
+                  src={`https://www.google.com/maps?q=${listing.latitude},${listing.longitude}&output=embed`}
+                  className="h-full w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Owner + contact */}
@@ -123,10 +167,11 @@ export default async function ListingDetailPage({ params }) {
             )}
           </div>
 
-          <div className="mt-4 border border-[var(--color-sand)] p-4">
-            <h2 className="font-display mb-3 text-lg">Contact owner</h2>
-            <ContactOwnerForm listingId={listing.id} />
+          <div className="mt-4">
+            <RevealPhoneButton listingId={listing.id} />
           </div>
+
+          <InquiryAccordion listingId={listing.id} />
 
           <div className="mt-4">
             <ReportListingButton listingId={listing.id} />

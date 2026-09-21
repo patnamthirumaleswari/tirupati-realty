@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
-import { getMyProfile, getPendingListings, setListingStatus } from '@/lib/queries';
+import { getMyProfile, getPendingListings, setListingStatus, revealOwnerPhone } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import AdminNav from '@/app/components/AdminNav';
 
@@ -15,6 +15,7 @@ export default function AdminListingsPage() {
   const [checkingRole, setCheckingRole] = useState(true);
   const [pending, setPending] = useState([]);
   const [listingsLoading, setListingsLoading] = useState(true);
+  const [revealedPhones, setRevealedPhones] = useState({});
   const [actioningId, setActioningId] = useState(null);
   const [pageError, setPageError] = useState('');
 
@@ -46,6 +47,15 @@ export default function AdminListingsPage() {
       .then(setPending)
       .catch((err) => setPageError(err.message || String(err)))
       .finally(() => setListingsLoading(false));
+  }
+
+  async function handleReveal(listingId) {
+    try {
+      const phone = await revealOwnerPhone(listingId);
+      setRevealedPhones((prev) => ({ ...prev, [listingId]: phone }));
+    } catch (err) {
+      alert(err.message || String(err));
+    }
   }
 
   async function handleAction(id, status) {
@@ -103,7 +113,16 @@ export default function AdminListingsPage() {
                     <p className="mt-1 text-[var(--color-brick)]">{formatPrice(listing)}</p>
                     <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
                       Posted by {listing.owner?.full_name || 'Unknown'}
-                      {listing.owner?.phone ? ` · ${listing.owner.phone}` : ''}
+                      {revealedPhones[listing.id] ? (
+                        ` · ${revealedPhones[listing.id]}`
+                      ) : (
+                        <button
+                          onClick={() => handleReveal(listing.id)}
+                          className="ml-1 underline hover:text-[var(--color-teal-deep)]"
+                        >
+                          reveal phone
+                        </button>
+                      )}
                     </p>
                   </div>
 

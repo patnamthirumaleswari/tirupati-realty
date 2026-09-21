@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 export default function SignupPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +23,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, phone },
       },
     });
 
@@ -56,6 +57,23 @@ export default function SignupPage() {
             required
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
+            className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-[var(--color-ink-soft)]" htmlFor="phone">
+            Phone number
+          </label>
+          <p className="text-xs text-[var(--color-ink-softer)]">
+            Shown only when someone reveals it on one of your listings.
+          </p>
+          <input
+            id="phone"
+            type="tel"
+            required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="e.g. 9876543210"
             className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
           />
         </div>
@@ -96,6 +114,12 @@ export default function SignupPage() {
         >
           {submitting ? 'Creating account…' : 'Sign up'}
         </button>
+
+        <p className="text-xs text-[var(--color-ink-soft)]">
+          By signing up, you agree to our{' '}
+          <Link href="/terms" className="underline">Terms of Service</Link> and{' '}
+          <Link href="/privacy-policy" className="underline">Privacy Policy</Link>.
+        </p>
       </form>
 
       <p className="mt-6 text-sm text-[var(--color-ink-soft)]">
