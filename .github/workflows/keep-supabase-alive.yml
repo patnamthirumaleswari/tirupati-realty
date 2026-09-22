@@ -1,0 +1,26 @@
+name: Keep Supabase project active
+
+# Supabase's free tier pauses a project after 7 days with no activity.
+# This workflow makes one lightweight, harmless read every 3 days so the
+# project never goes quiet long enough to trigger that — required by the
+# project's acceptance criteria (Section 11).
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *' # 06:00 UTC, every 3 days
+  workflow_dispatch: # lets you also trigger it manually from the Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one row from a public table
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/localities?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "Supabase responded with HTTP $status"
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Supabase ping failed with status $status"
+            exit 1
+          fi

@@ -495,13 +495,18 @@ export default function NewListingPage() {
         {/* Photos */}
         <div>
           <label className="block text-sm text-[var(--color-ink-soft)]">
-            Photos (first one becomes the cover photo)
+            Photos (first one becomes the cover photo) — you can pick multiple
+            at once (hold Ctrl/Cmd while selecting), or add more one at a time.
           </label>
           <input
             type="file"
             accept="image/*"
             multiple
-            onChange={(e) => setPhotoFiles(Array.from(e.target.files || []))}
+            onChange={(e) => {
+              const newFiles = Array.from(e.target.files || []);
+              setPhotoFiles((prev) => [...prev, ...newFiles]);
+              e.target.value = ''; // allow picking the same file again later
+            }}
             className="mt-1 w-full text-sm text-[var(--color-ink-soft)] file:mr-3 file:border file:border-[var(--color-sand)] file:bg-[var(--color-surface)] file:px-3 file:py-1.5 file:text-sm"
           />
           {photoFiles.length > 0 && (
@@ -522,6 +527,14 @@ export default function NewListingPage() {
                       Cover
                     </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setPhotoFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    aria-label="Remove photo"
+                    className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80"
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
             </div>

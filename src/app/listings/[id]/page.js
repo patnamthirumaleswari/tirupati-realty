@@ -4,6 +4,7 @@ import InquiryAccordion from '@/app/components/InquiryAccordion';
 import ReportListingButton from '@/app/components/ReportListingButton';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import RevealPhoneButton from '@/app/components/RevealPhoneButton';
+import ListingGallery from '@/app/components/ListingGallery';
 
 // Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
 // route must explicitly opt into the Edge Runtime.
@@ -48,23 +49,12 @@ export default async function ListingDetailPage({ params }) {
     );
   }
 
-  const cover =
-    listing.images?.find((img) => img.is_cover) || listing.images?.[0];
   const amenityNames = (listing.amenities || []).map((a) => a.amenity?.name).filter(Boolean);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 md:px-12">
-      {/* Image */}
-      <div className="aspect-[16/9] bg-[var(--color-sand)]">
-        {cover?.r2_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={cover.r2_url}
-            alt={listing.title}
-            className="h-full w-full object-cover"
-          />
-        )}
-      </div>
+      {/* Photo gallery */}
+      <ListingGallery images={listing.images || []} title={listing.title} />
 
       <div className="mt-8 grid gap-10 md:grid-cols-3">
         {/* Main details */}
