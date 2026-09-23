@@ -33,7 +33,7 @@ export default function Navbar() {
           <Link href="/" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Home</Link>
           <Link href="/listings" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Buy / Rent</Link>
           {!loading && user && (
-            <Link href="/dashboard" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Dashboard</Link>
+            <Link href="/dashboard" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">My Account</Link>
           )}
         </nav>
 
