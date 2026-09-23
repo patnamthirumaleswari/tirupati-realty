@@ -17,7 +17,7 @@ const manrope = Manrope({
   variable: '--font-manrope',
 });
 
-const SITE_URL = 'https://tirupati-realty.pages.dev';
+const SITE_URL = 'https://tirupati-realty.patnamthirumaleswari.workers.dev';
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),

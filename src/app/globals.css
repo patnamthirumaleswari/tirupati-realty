@@ -1,20 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  /* Same grounding (Tirupati's granite, the temple tank, local materials),
-     pushed to a brighter, more energetic register. */
-  --color-bg: #f4f8f6;
-  --color-ink: #16211c;
-  --color-ink-soft: #4f6459;
-  --color-teal: #0fa98f;
-  --color-teal-deep: #067a66;
-  --color-brick: #ff6b45;
-  --color-sand: #dce6de;
-  --color-gold: #ffb627;
+  /* Palette matching the InternFactory Properties prototype: warm cream
+     background, clay-orange accent, deep ink text, forest green for the
+     trust section. */
+  --color-bg: #fbf6ee;
+  --color-bg2: #f3ecdf;
+  --color-ink: #241c15;
+  --color-ink-soft: #6b6152;
+  --color-ink-softer: #8a7e6b;
+  --color-teal: #c1652f;
+  --color-teal-deep: #8f4319;
+  --color-brick: #b14545;
+  --color-green: #2f4b3c;
+  --color-greenlight: #c9d9c6;
+  --color-gold: #cb9b3f;
+  --color-sand: #e7dcc7;
+  --color-sand2: #f0e9da;
   --color-surface: #ffffff;
+  --color-wa: #3ea05a;
 
   --font-display: var(--font-fraunces), Georgia, serif;
-  --font-body: var(--font-work-sans), system-ui, sans-serif;
+  --font-body: var(--font-manrope), system-ui, sans-serif;
 }
 
 body {
