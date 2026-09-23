@@ -10,6 +10,8 @@ import {
   getMyFavoriteListings,
   getMyPhone,
   updateMyPhone,
+  renewListing,
+  markListingOutcome,
   getMyLeads,
   getMyPhoneRevealCounts,
   getMyInquiryCounts,
@@ -57,6 +59,7 @@ function DashboardContent() {
   const [phoneInput, setPhoneInput] = useState('');
   const [savingPhone, setSavingPhone] = useState(false);
   const [phoneSaved, setPhoneSaved] = useState(false);
+  const [actioningListingId, setActioningListingId] = useState(null);
 
   useEffect(() => {
     if (!loading && !user && !loggingOut) {
@@ -98,6 +101,34 @@ function DashboardContent() {
       alert(err.message || String(err));
     } finally {
       setSavingPhone(false);
+    }
+  }
+
+  async function handleRenew(listingId) {
+    setActioningListingId(listingId);
+    try {
+      await renewListing(listingId);
+      setMyListings((prev) =>
+        prev.map((l) => (l.id === listingId ? { ...l, status: 'live' } : l))
+      );
+    } catch (err) {
+      alert(err.message || String(err));
+    } finally {
+      setActioningListingId(null);
+    }
+  }
+
+  async function handleMarkOutcome(listingId, status) {
+    setActioningListingId(listingId);
+    try {
+      await markListingOutcome(listingId, status);
+      setMyListings((prev) =>
+        prev.map((l) => (l.id === listingId ? { ...l, status } : l))
+      );
+    } catch (err) {
+      alert(err.message || String(err));
+    } finally {
+      setActioningListingId(null);
     }
   }
 
@@ -224,9 +255,44 @@ function DashboardContent() {
                       {inquiryCounts[listing.id] || 0} inquiries · {revealCounts[listing.id] || 0} phone reveals
                     </p>
                   </div>
-                  <span className="rounded-full border border-[var(--color-sand)] px-3 py-1 text-xs text-[var(--color-ink-soft)]">
-                    {STATUS_LABELS[listing.status] || listing.status}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <span className="rounded-full border border-[var(--color-sand)] px-3 py-1 text-xs text-[var(--color-ink-soft)]">
+                      {STATUS_LABELS[listing.status] || listing.status}
+                    </span>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {(listing.status === 'live' || listing.status === 'pending_approval') && (
+                        <Link
+                          href={`/listings/${listing.id}/edit`}
+                          className="text-xs font-semibold text-[var(--color-teal)] hover:underline"
+                        >
+                          Edit
+                        </Link>
+                      )}
+                      {(listing.status === 'live' || listing.status === 'expired') && (
+                        <>
+                          <button
+                            disabled={actioningListingId === listing.id}
+                            onClick={() => handleRenew(listing.id)}
+                            className="text-xs font-semibold text-[var(--color-teal)] hover:underline disabled:opacity-50"
+                          >
+                            Renew
+                          </button>
+                          <button
+                            disabled={actioningListingId === listing.id}
+                            onClick={() =>
+                              handleMarkOutcome(
+                                listing.id,
+                                listing.purpose === 'rent' ? 'rented' : 'sold'
+                              )
+                            }
+                            className="text-xs font-semibold text-[var(--color-ink-soft)] hover:underline disabled:opacity-50"
+                          >
+                            Mark {listing.purpose === 'rent' ? 'Rented' : 'Sold'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>

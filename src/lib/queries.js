@@ -550,3 +550,78 @@ export async function getMyInquiryCounts(userId) {
   }
   return counts;
 }
+
+// --- Owner actions on their own listings: renew, mark sold/rented ---
+
+// Resets expires_at to 60 days from now — the spec's "one-click Renew".
+// RLS already permits an owner to update their own listing's expires_at.
+export async function renewListing(listingId) {
+  const newExpiry = new Date();
+  newExpiry.setDate(newExpiry.getDate() + 60);
+
+  const { error } = await supabase
+    .from('listings')
+    .update({ expires_at: newExpiry.toISOString(), status: 'live' })
+    .eq('id', listingId);
+
+  if (error) throw error;
+}
+
+// Owner marks their own listing as sold or rented. Reuses the same update
+// path as admin status changes — RLS's guard trigger only intercepts an
+// attempt to self-approve to 'live', so 'sold'/'rented' go through freely
+// for the listing's own owner.
+export async function markListingOutcome(listingId, status) {
+  const { error } = await supabase
+    .from('listings')
+    .update({ status })
+    .eq('id', listingId);
+
+  if (error) throw error;
+}
+
+// --- Editing an existing listing (owner or admin) ---
+
+// Full raw data needed to pre-fill the edit form, including which
+// amenities are currently selected. RLS lets the owner select their own
+// listing regardless of its status (pending/live/rejected/etc.).
+export async function getListingForEdit(id) {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(
+      `*, amenities:listing_amenities(amenity_id), images:listing_images(r2_url, is_cover, sort_order)`
+    )
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Updates a listing's fields. A non-admin editing a listing that's
+// currently live will have it quietly dropped back to pending_approval by
+// the existing database trigger (guard_listing_status_transition only
+// intercepts a direct jump TO 'live', so editing fields on an
+// already-live listing doesn't retrigger review — only an explicit status
+// change to 'live' would).
+export async function updateListing(id, fields) {
+  const { error } = await supabase.from('listings').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+// Full-replace a listing's amenity selections — simplest correct approach
+// for an edit form (clear old links, insert the new set).
+export async function updateListingAmenities(id, amenityIds) {
+  const { error: deleteError } = await supabase
+    .from('listing_amenities')
+    .delete()
+    .eq('listing_id', id);
+  if (deleteError) throw deleteError;
+
+  if (amenityIds.length > 0) {
+    const { error: insertError } = await supabase
+      .from('listing_amenities')
+      .insert(amenityIds.map((amenity_id) => ({ listing_id: id, amenity_id })));
+    if (insertError) throw insertError;
+  }
+}
