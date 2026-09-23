@@ -13,6 +13,12 @@ import {
 } from '@/lib/queries';
 import LocationPicker from '@/app/components/LocationPicker';
 
+// Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
+// route must explicitly opt into the Edge Runtime. Being nested under a
+// dynamic [id] segment is enough to make Next.js treat this as dynamic,
+// even though the actual data fetching happens client-side.
+export const runtime = 'edge';
+
 const AREA_UNITS = ['sqft', 'acres', 'cents', 'guntas'];
 const FURNISHING_OPTIONS = ['unfurnished', 'semi_furnished', 'fully_furnished'];
 
