@@ -3,10 +3,6 @@ import ListingCard from '@/app/components/ListingCard';
 import ListingsViewToggle from '@/app/components/ListingsViewToggle';
 import { formatPrice } from '@/lib/format';
 
-// Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
-// route must explicitly opt into the Edge Runtime.
-export const runtime = 'edge';
-
 export const metadata = {
   title: 'Search listings — Tirupati Realty',
 };

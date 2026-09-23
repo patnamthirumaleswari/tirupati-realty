@@ -6,10 +6,6 @@ import FavoriteButton from '@/app/components/FavoriteButton';
 import RevealPhoneButton from '@/app/components/RevealPhoneButton';
 import ListingGallery from '@/app/components/ListingGallery';
 
-// Required by @cloudflare/next-on-pages: any dynamic (server-rendered)
-// route must explicitly opt into the Edge Runtime.
-export const runtime = 'edge';
-
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const listing = await getListingById(id);
