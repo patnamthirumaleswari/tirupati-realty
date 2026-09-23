@@ -3,6 +3,13 @@ import './globals.css';
 import { AuthProvider } from '@/lib/AuthProvider';
 import { FavoritesProvider } from '@/lib/FavoritesProvider';
 import Navbar from '@/app/components/Navbar';
+
+// Required by @cloudflare/next-on-pages. Setting this once at the root
+// layout applies it to every route in the app (including Next.js's own
+// internal /_not-found and /_global-error pages, which can't have their
+// own runtime export added directly) — simpler and more future-proof
+// than adding this line to every individual page file.
+export const runtime = 'edge';
 import Footer from '@/app/components/Footer';
 
 const fraunces = Fraunces({
