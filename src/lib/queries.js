@@ -17,17 +17,27 @@ export async function getLocalities() {
 // (multi-select checkboxes); anything left out/empty is simply not
 // applied. Price range only ever filters the `price` column (sale/lease
 // listings) — rent_amount isn't included, to keep this simple for now.
-export async function searchListings({ locality, type, purpose, minPrice, maxPrice } = {}) {
+export async function searchListings({
+  locality,
+  type,
+  purpose,
+  minPrice,
+  maxPrice,
+  keyword,
+  sort,
+  page = 1,
+  pageSize = 12,
+} = {}) {
   let query = supabase
     .from('listings')
     .select(
       `id, title, type, purpose, price, price_on_request, rent_amount,
        area_value, area_unit, bedrooms, latitude, longitude,
        locality:localities(id, name, mandal),
-       cover_image:listing_images(r2_url, is_cover)`
+       cover_image:listing_images(r2_url, is_cover)`,
+      { count: 'exact' }
     )
-    .eq('status', 'live')
-    .order('created_at', { ascending: false });
+    .eq('status', 'live');
 
   const asArray = (v) => (v == null || v === '' ? [] : Array.isArray(v) ? v : [v]);
 
@@ -47,9 +57,26 @@ export async function searchListings({ locality, type, purpose, minPrice, maxPri
   if (minPrice) query = query.gte('price', Number(minPrice));
   if (maxPrice) query = query.lte('price', Number(maxPrice));
 
-  const { data, error } = await query;
+  // Keyword search across title and description (case-insensitive,
+  // partial match on either field).
+  if (keyword && keyword.trim()) {
+    const term = keyword.trim().replace(/[%_]/g, '\\$&');
+    query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%`);
+  }
+
+  // Sort — defaults to newest first.
+  if (sort === 'price_asc') query = query.order('price', { ascending: true, nullsFirst: false });
+  else if (sort === 'price_desc') query = query.order('price', { ascending: false, nullsFirst: false });
+  else query = query.order('created_at', { ascending: false });
+
+  // Pagination.
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
   if (error) throw error;
-  return data;
+  return { listings: data, totalCount: count ?? 0 };
 }
 
 // Most recent live listings for the homepage. Only 'live' rows are ever
@@ -253,15 +280,20 @@ export async function createInquiry({ listingId, name, phone, message }) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from('inquiries').insert({
-    listing_id: listingId,
-    sender_id: user?.id ?? null,
-    sender_name: name,
-    sender_phone: phone,
-    message: message || null,
-  });
+  const { data, error } = await supabase
+    .from('inquiries')
+    .insert({
+      listing_id: listingId,
+      sender_id: user?.id ?? null,
+      sender_name: name,
+      sender_phone: phone,
+      message: message || null,
+    })
+    .select()
+    .single();
 
   if (error) throw error;
+  return data;
 }
 
 // --- Admin: localities & amenities management ---
@@ -624,4 +656,51 @@ export async function updateListingAmenities(id, amenityIds) {
       .insert(amenityIds.map((amenity_id) => ({ listing_id: id, amenity_id })));
     if (insertError) throw insertError;
   }
+}
+
+// --- Admin: user management ---
+// Note: email isn't available here — it lives in Supabase's private auth
+// system, not the `profiles` table, and reading it requires the
+// service-role key (server-side only, same pattern as the notify API
+// route). This lists what's available client-side: name, role, verified
+// status, agency, and phone is intentionally excluded (column-restricted,
+// same as everywhere else in this app).
+
+export async function getAllUsers() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, is_verified, agency_name, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function setUserVerified(userId, isVerified) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_verified: isVerified })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
+export async function setUserRole(userId, role) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
+// Checks whether a phone number is already registered — used by the
+// signup form BEFORE attempting to create an account, so a duplicate
+// phone shows a clear message immediately instead of silently failing
+// deep inside a database trigger. Reveals only true/false, never any
+// actual phone data.
+export async function checkPhoneExists(phone) {
+  const { data, error } = await supabase.rpc('check_phone_exists', { p_phone: phone });
+  if (error) throw error;
+  return data;
 }

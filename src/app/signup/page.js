@@ -1,23 +1,41 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
+import { checkPhoneExists } from '@/lib/queries';
 
 export default function SignupPage() {
-  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [signedUp, setSignedUp] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
+
+    // Check phone availability BEFORE attempting signup, so a duplicate
+    // shows a clear message immediately instead of the account creation
+    // silently half-failing.
+    try {
+      const alreadyTaken = await checkPhoneExists(phone.trim());
+      if (alreadyTaken) {
+        setError('This phone number is already registered to another account. Please use a different number, or log in if this is your account.');
+        setSubmitting(false);
+        return;
+      }
+    } catch (checkErr) {
+      // If the availability check itself fails for some reason, don't
+      // block signup entirely on it — fall through and let the actual
+      // signup attempt proceed (the database constraint is still the
+      // real source of truth either way).
+      console.error('Phone availability check failed:', checkErr);
+    }
 
     const { error: signUpError } = await supabase.auth.signUp({
       email,
@@ -36,7 +54,33 @@ export default function SignupPage() {
 
     // The `handle_new_user` trigger in the database creates a matching
     // row in `profiles` automatically — nothing else to do here.
-    router.push('/dashboard');
+    //
+    // Note: if this email is already registered, Supabase's signUp()
+    // still returns success here rather than an error — that's
+    // deliberate on Supabase's part, to avoid leaking which emails are
+    // registered (a security measure, not a bug). This message is
+    // written to be correct and helpful either way, without confirming
+    // or denying whether the email existed already.
+    setSignedUp(true);
+  }
+
+  if (signedUp) {
+    return (
+      <main className="mx-auto max-w-sm px-6 py-16 text-center">
+        <h1 className="font-display text-3xl">Check your email</h1>
+        <p className="mt-4 text-sm text-[var(--color-ink-soft)]">
+          We've sent a confirmation link to <strong>{email}</strong>. Click
+          it to activate your account.
+        </p>
+        <p className="mt-4 text-sm text-[var(--color-ink-soft)]">
+          Already have an account with this email?{' '}
+          <Link href="/login" className="text-[var(--color-teal-deep)] underline">
+            Log in instead
+          </Link>
+          .
+        </p>
+      </main>
+    );
   }
 
   return (
