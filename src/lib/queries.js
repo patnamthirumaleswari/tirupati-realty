@@ -260,7 +260,7 @@ export async function getListingById(id) {
        bathrooms, floor_number, total_floors, property_age_years,
        facing_direction, furnishing, plot_length, plot_width, road_width_ft,
        is_approved_layout, landmark, latitude, longitude, status, created_at,
-       locality:localities(name, mandal),
+       locality_id, locality:localities(name, mandal),
        images:listing_images(r2_url, is_cover, sort_order),
        amenities:listing_amenities(amenity:amenities(name)),
        owner:profiles!listings_owner_id_fkey(full_name, agency_name, is_verified, avatar_url)`
@@ -702,5 +702,52 @@ export async function setUserRole(userId, role) {
 export async function checkPhoneExists(phone) {
   const { data, error } = await supabase.rpc('check_phone_exists', { p_phone: phone });
   if (error) throw error;
+  return data;
+}
+
+// A handful of other live listings similar to the given one — same
+// locality first, falling back to same type/purpose if the locality
+// doesn't have enough. Excludes the listing itself.
+export async function getSimilarListings(listing, limitCount = 4) {
+  let query = supabase
+    .from('listings')
+    .select(
+      `id, title, type, purpose, price, price_on_request, rent_amount,
+       area_value, area_unit, bedrooms,
+       locality:localities(id, name, mandal),
+       cover_image:listing_images(r2_url, is_cover)`
+    )
+    .eq('status', 'live')
+    .neq('id', listing.id)
+    .limit(limitCount);
+
+  if (listing.locality_id) {
+    query = query.eq('locality_id', listing.locality_id);
+  } else {
+    query = query.eq('type', listing.type);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  // If the locality match came up short, top up with same-type listings.
+  if (data.length < limitCount && listing.locality_id) {
+    const { data: more, error: moreError } = await supabase
+      .from('listings')
+      .select(
+        `id, title, type, purpose, price, price_on_request, rent_amount,
+         area_value, area_unit, bedrooms,
+         locality:localities(id, name, mandal),
+         cover_image:listing_images(r2_url, is_cover)`
+      )
+      .eq('status', 'live')
+      .eq('type', listing.type)
+      .neq('id', listing.id)
+      .not('id', 'in', `(${data.map((d) => d.id).join(',') || '00000000-0000-0000-0000-000000000000'})`)
+      .limit(limitCount - data.length);
+
+    if (!moreError && more) return [...data, ...more];
+  }
+
   return data;
 }

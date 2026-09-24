@@ -1,4 +1,4 @@
-import { getListingById } from '@/lib/queries';
+import { getListingById, getSimilarListings } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import InquiryAccordion from '@/app/components/InquiryAccordion';
 import ReportListingButton from '@/app/components/ReportListingButton';
@@ -6,6 +6,7 @@ import FavoriteButton from '@/app/components/FavoriteButton';
 import RevealPhoneButton from '@/app/components/RevealPhoneButton';
 import ListingGallery from '@/app/components/ListingGallery';
 import ShareButton from '@/app/components/ShareButton';
+import ListingCard from '@/app/components/ListingCard';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -47,6 +48,7 @@ export default async function ListingDetailPage({ params }) {
   }
 
   const amenityNames = (listing.amenities || []).map((a) => a.amenity?.name).filter(Boolean);
+  const similarListings = await getSimilarListings(listing).catch(() => []);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 md:px-12">
@@ -174,6 +176,17 @@ export default async function ListingDetailPage({ params }) {
           </p>
         </div>
       </div>
+
+      {similarListings.length > 0 && (
+        <div className="mt-12 border-t border-[var(--color-sand)] pt-8">
+          <h2 className="font-display text-xl">Similar listings</h2>
+          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {similarListings.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -27,6 +27,8 @@ export default function Footer() {
           <div>
             <div className="mb-3.5 text-[13px] font-bold text-[var(--color-bg)]">Company</div>
             <div className="flex flex-col gap-2.5 text-[13.5px] text-[#B9AE99]">
+              <Link href="/about" className="hover:text-[var(--color-bg)]">About</Link>
+              <Link href="/contact" className="hover:text-[var(--color-bg)]">Contact</Link>
               <Link href="/terms" className="hover:text-[var(--color-bg)]">Terms of Service</Link>
               <Link href="/privacy-policy" className="hover:text-[var(--color-bg)]">Privacy Policy</Link>
             </div>
