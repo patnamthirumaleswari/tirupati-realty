@@ -1,0 +1,30 @@
+name: Weekly database backup
+
+# Dumps the full Supabase Postgres database every week and stores it as
+# a downloadable GitHub Actions artifact — outside Supabase entirely, so
+# a Supabase-side incident can't take out the backup too.
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # 03:00 UTC every Sunday
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump the database
+        run: |
+          pg_dump "${{ secrets.DATABASE_URL }}" \
+            --no-owner --no-privileges \
+            -f "backup-$(date +%Y-%m-%d).sql"
+
+      - name: Upload as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backup-*.sql
+          retention-days: 90
