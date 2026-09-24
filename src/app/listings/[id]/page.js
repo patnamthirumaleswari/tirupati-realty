@@ -5,6 +5,7 @@ import ReportListingButton from '@/app/components/ReportListingButton';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import RevealPhoneButton from '@/app/components/RevealPhoneButton';
 import ListingGallery from '@/app/components/ListingGallery';
+import ShareButton from '@/app/components/ShareButton';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -62,7 +63,10 @@ export default async function ListingDetailPage({ params }) {
           </span>
           <div className="flex items-start justify-between gap-3">
             <h1 className="font-display mt-1 text-3xl">{listing.title}</h1>
-            <FavoriteButton listingId={listing.id} className="shrink-0 border border-[var(--color-sand)] bg-[var(--color-surface)]" />
+            <div className="flex shrink-0 gap-2">
+              <ShareButton title={listing.title} className="border border-[var(--color-sand)] bg-[var(--color-surface)]" />
+              <FavoriteButton listingId={listing.id} className="border border-[var(--color-sand)] bg-[var(--color-surface)]" />
+            </div>
           </div>
           <p className="mt-1 text-[var(--color-ink-soft)]">
             {listing.locality?.name}
@@ -162,6 +166,12 @@ export default async function ListingDetailPage({ params }) {
           <div className="mt-4">
             <ReportListingButton listingId={listing.id} />
           </div>
+
+          <p className="mt-4 text-xs leading-relaxed text-[var(--color-ink-softer)]">
+            Tirupati Realty is a listing platform, not a broker — we don't
+            verify title, ownership, or approval status. Please do your own
+            diligence before proceeding with any transaction.
+          </p>
         </div>
       </div>
     </main>
