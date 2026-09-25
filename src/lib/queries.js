@@ -759,3 +759,26 @@ export async function incrementViewCount(listingId) {
   const { error } = await supabase.rpc('increment_view_count', { p_listing_id: listingId });
   if (error) console.error('Failed to record view:', error);
 }
+
+// --- Admin: audit log ---
+
+export async function logAdminAction(action, targetTable, targetId) {
+  const { error } = await supabase.rpc('log_admin_action', {
+    p_action: action,
+    p_target_table: targetTable,
+    p_target_id: targetId,
+  });
+  // Logging failure shouldn't break the actual admin action — just note it.
+  if (error) console.error('Failed to write audit log entry:', error);
+}
+
+export async function getAuditLog(limitCount = 100) {
+  const { data, error } = await supabase
+    .from('audit_log')
+    .select('id, action, target_table, target_id, created_at, actor:profiles(full_name)')
+    .order('created_at', { ascending: false })
+    .limit(limitCount);
+
+  if (error) throw error;
+  return data;
+}

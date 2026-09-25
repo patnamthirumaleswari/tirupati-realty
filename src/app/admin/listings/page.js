@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
-import { getMyProfile, getPendingListings, setListingStatus, revealOwnerPhone } from '@/lib/queries';
+import { getMyProfile, getPendingListings, setListingStatus, revealOwnerPhone, logAdminAction } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import AdminNav from '@/app/components/AdminNav';
 
@@ -63,6 +63,16 @@ export default function AdminListingsPage() {
     try {
       await setListingStatus(id, status);
       setPending((prev) => prev.filter((l) => l.id !== id));
+      logAdminAction(status === 'live' ? 'approve_listing' : 'reject_listing', 'listings', id);
+
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: status === 'live' ? 'listing_approved' : 'listing_rejected',
+          listingId: id,
+        }),
+      }).catch((err) => console.error('Notify request failed:', err));
     } catch (err) {
       alert(err.message || String(err));
     } finally {

@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/localities', label: 'Localities' },
   { href: '/admin/amenities', label: 'Amenities' },
+  { href: '/admin/audit-log', label: 'Audit log' },
 ];
 
 export default function AdminNav() {

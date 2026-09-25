@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
-import { getMyProfile, getAllUsers, setUserVerified, setUserRole } from '@/lib/queries';
+import { getMyProfile, getAllUsers, setUserVerified, setUserRole, logAdminAction } from '@/lib/queries';
 import AdminNav from '@/app/components/AdminNav';
 
 const ROLES = ['user', 'agent', 'builder', 'admin'];
@@ -51,6 +51,7 @@ export default function AdminUsersPage() {
       setUsers((prev) =>
         prev.map((x) => (x.id === u.id ? { ...x, is_verified: !x.is_verified } : x))
       );
+      logAdminAction(u.is_verified ? 'remove_verified' : 'grant_verified', 'profiles', u.id);
     } catch (err) {
       alert(err.message || String(err));
     } finally {
@@ -66,6 +67,7 @@ export default function AdminUsersPage() {
     try {
       await setUserRole(u.id, newRole);
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, role: newRole } : x)));
+      logAdminAction(`role_change_to_${newRole}`, 'profiles', u.id);
     } catch (err) {
       alert(err.message || String(err));
     } finally {
