@@ -252,7 +252,7 @@ function DashboardContent() {
                       {listing.locality?.name} · {formatPrice(listing)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-ink-softer)]">
-                      {inquiryCounts[listing.id] || 0} inquiries · {revealCounts[listing.id] || 0} phone reveals
+                      {listing.view_count || 0} views · {inquiryCounts[listing.id] || 0} inquiries · {revealCounts[listing.id] || 0} phone reveals
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">

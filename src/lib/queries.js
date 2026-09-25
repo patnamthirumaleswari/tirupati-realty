@@ -236,7 +236,7 @@ export async function getMyListings(userId) {
     .from('listings')
     .select(
       `id, title, type, purpose, status, price, price_on_request, rent_amount,
-       created_at, locality:localities(name)`
+       created_at, view_count, locality:localities(name)`
     )
     .eq('owner_id', userId)
     .order('created_at', { ascending: false });
@@ -750,4 +750,12 @@ export async function getSimilarListings(listing, limitCount = 4) {
   }
 
   return data;
+}
+
+// Fire-and-forget-style view counter — called once per listing detail
+// page load. Uses a SECURITY DEFINER function so anonymous visitors can
+// increment it without a broader UPDATE grant on listings.
+export async function incrementViewCount(listingId) {
+  const { error } = await supabase.rpc('increment_view_count', { p_listing_id: listingId });
+  if (error) console.error('Failed to record view:', error);
 }

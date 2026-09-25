@@ -1,4 +1,4 @@
-import { getListingById, getSimilarListings } from '@/lib/queries';
+import { getListingById, getSimilarListings, incrementViewCount } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import InquiryAccordion from '@/app/components/InquiryAccordion';
 import ReportListingButton from '@/app/components/ReportListingButton';
@@ -49,6 +49,10 @@ export default async function ListingDetailPage({ params }) {
 
   const amenityNames = (listing.amenities || []).map((a) => a.amenity?.name).filter(Boolean);
   const similarListings = await getSimilarListings(listing).catch(() => []);
+
+  if (listing.status === 'live') {
+    await incrementViewCount(id);
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 md:px-12">
