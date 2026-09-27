@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { formatPrice } from '@/lib/format';
 import FavoriteButton from '@/app/components/FavoriteButton';
+import { typeLabel, fieldTemplateFor } from '@/lib/propertyTypes';
 
 export default function ListingCard({ listing }) {
   const cover =
     listing.cover_image?.find((img) => img.is_cover) || listing.cover_image?.[0];
 
-  const badgeColor = listing.type === 'land' ? 'var(--color-green)' : 'var(--color-teal-deep)';
-  const badgeLabel = `${listing.type === 'land' ? 'Land' : 'Apartment'} · ${
+  const badgeColor = fieldTemplateFor(listing.type) === 'land' ? 'var(--color-green)' : 'var(--color-teal-deep)';
+  const badgeLabel = `${typeLabel(listing.type)} · ${
     listing.purpose === 'rent' ? 'Rent' : 'Sale'
   }`.toUpperCase();
 

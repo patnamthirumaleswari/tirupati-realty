@@ -12,6 +12,7 @@ import {
   uploadListingPhotos,
 } from '@/lib/queries';
 import LocationPicker from '@/app/components/LocationPicker';
+import { typesForCategory, fieldTemplateFor } from '@/lib/propertyTypes';
 
 const AREA_UNITS = ['sqft', 'acres', 'cents', 'guntas'];
 const FURNISHING_OPTIONS = ['unfurnished', 'semi_furnished', 'fully_furnished'];
@@ -52,6 +53,7 @@ export default function EditListingPage() {
           return;
         }
         setForm({
+          category: listing.category || 'residential',
           type: listing.type,
           purpose: listing.purpose,
           title: listing.title || '',
@@ -104,6 +106,7 @@ export default function EditListingPage() {
     const num = (v) => (v === '' || v === null ? null : Number(v));
 
     const payload = {
+      category: form.category,
       type: form.type,
       purpose: form.purpose,
       title: form.title,
@@ -118,7 +121,7 @@ export default function EditListingPage() {
       deposit_amount: form.purpose === 'rent' ? num(form.deposit_amount) : null,
       area_value: num(form.area_value),
       area_unit: form.area_unit || null,
-      ...(form.type === 'apartment'
+      ...(fieldTemplateFor(form.type) === 'building'
         ? {
             bedrooms: num(form.bedrooms),
             bathrooms: num(form.bathrooms),
@@ -176,8 +179,23 @@ export default function EditListingPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6">
-        {/* Type + purpose */}
+        {/* Category + type + purpose */}
         <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-[var(--color-ink-soft)]">Category</label>
+            <select
+              value={form.category}
+              onChange={(e) => {
+                const newCategory = e.target.value;
+                const firstOfCategory = typesForCategory(newCategory)[0]?.value;
+                setForm((f) => ({ ...f, category: newCategory, type: firstOfCategory }));
+              }}
+              className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
+            >
+              <option value="residential">Residential</option>
+              <option value="commercial">Commercial</option>
+            </select>
+          </div>
           <div>
             <label className="block text-sm text-[var(--color-ink-soft)]">Property type</label>
             <select
@@ -185,22 +203,26 @@ export default function EditListingPage() {
               onChange={(e) => update('type', e.target.value)}
               className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
             >
-              <option value="apartment">Apartment</option>
-              <option value="land">Land</option>
+              {typesForCategory(form.category).map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
             </select>
           </div>
-          <div>
-            <label className="block text-sm text-[var(--color-ink-soft)]">Purpose</label>
-            <select
-              value={form.purpose}
-              onChange={(e) => update('purpose', e.target.value)}
-              className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
-            >
-              <option value="sale">For sale</option>
-              <option value="rent">For rent</option>
-              <option value="lease">For lease</option>
-            </select>
-          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-[var(--color-ink-soft)]">Purpose</label>
+          <select
+            value={form.purpose}
+            onChange={(e) => update('purpose', e.target.value)}
+            className="mt-1 w-full max-w-xs border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
+          >
+            <option value="sale">For sale</option>
+            <option value="rent">For rent</option>
+            <option value="lease">For lease</option>
+          </select>
         </div>
 
         {/* Title + description */}
@@ -366,9 +388,9 @@ export default function EditListingPage() {
         </div>
 
         {/* Apartment-specific fields */}
-        {form.type === 'apartment' && (
+        {fieldTemplateFor(form.type) === 'building' && (
           <div className="border border-[var(--color-sand)] p-4">
-            <p className="mb-3 text-sm text-[var(--color-teal-deep)]">Apartment details</p>
+            <p className="mb-3 text-sm text-[var(--color-teal-deep)]">Building details</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-[var(--color-ink-soft)]">Bedrooms</label>
@@ -447,9 +469,9 @@ export default function EditListingPage() {
         )}
 
         {/* Land-specific fields */}
-        {form.type === 'land' && (
+        {fieldTemplateFor(form.type) === 'land' && (
           <div className="border border-[var(--color-sand)] p-4">
-            <p className="mb-3 text-sm text-[var(--color-teal-deep)]">Land details</p>
+            <p className="mb-3 text-sm text-[var(--color-teal-deep)]">Plot details</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-[var(--color-ink-soft)]">Plot length (ft)</label>

@@ -2,6 +2,7 @@ import { getLocalities, searchListings } from '@/lib/queries';
 import ListingCard from '@/app/components/ListingCard';
 import ListingsViewToggle from '@/app/components/ListingsViewToggle';
 import { formatPrice } from '@/lib/format';
+import { PROPERTY_TYPES } from '@/lib/propertyTypes';
 
 export const metadata = {
   title: 'Search listings — Tirupati Realty',
@@ -18,6 +19,7 @@ export default async function ListingsPage({ searchParams }) {
   const params = await searchParams;
   const selectedLocalities = toArray(params?.locality);
   const selectedTypes = toArray(params?.type);
+  const selectedCategories = toArray(params?.propcategory);
   const selectedPurposes = toArray(params?.purpose);
   const minPrice = params?.minPrice || '';
   const maxPrice = params?.maxPrice || '';
@@ -30,6 +32,7 @@ export default async function ListingsPage({ searchParams }) {
     searchListings({
       locality: selectedLocalities,
       type: selectedTypes,
+      category: selectedCategories,
       purpose: selectedPurposes,
       minPrice,
       maxPrice,
@@ -54,6 +57,7 @@ export default async function ListingsPage({ searchParams }) {
     const usp = new URLSearchParams();
     selectedLocalities.forEach((v) => usp.append('locality', v));
     selectedTypes.forEach((v) => usp.append('type', v));
+    selectedCategories.forEach((v) => usp.append('propcategory', v));
     selectedPurposes.forEach((v) => usp.append('purpose', v));
     if (minPrice) usp.set('minPrice', minPrice);
     if (maxPrice) usp.set('maxPrice', maxPrice);
@@ -145,16 +149,36 @@ export default async function ListingsPage({ searchParams }) {
                 </div>
               </div>
 
+              {/* Category */}
+              <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
+                  Category
+                </p>
+                <div className="flex flex-col gap-2 text-sm">
+                  {[
+                    { value: 'residential', label: 'Residential' },
+                    { value: 'commercial', label: 'Commercial' },
+                  ].map((opt) => (
+                    <label key={opt.value} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="propcategory"
+                        value={opt.value}
+                        defaultChecked={selectedCategories.includes(opt.value)}
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {/* Type */}
               <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
                   Property type
                 </p>
-                <div className="flex flex-col gap-2 text-sm">
-                  {[
-                    { value: 'land', label: 'Land / Plot' },
-                    { value: 'apartment', label: 'Apartment' },
-                  ].map((opt) => (
+                <div className="flex max-h-48 flex-col gap-2 overflow-y-auto text-sm">
+                  {PROPERTY_TYPES.map((opt) => (
                     <label key={opt.value} className="flex items-center gap-2">
                       <input
                         type="checkbox"

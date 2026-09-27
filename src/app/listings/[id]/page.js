@@ -7,6 +7,7 @@ import RevealPhoneButton from '@/app/components/RevealPhoneButton';
 import ListingGallery from '@/app/components/ListingGallery';
 import ShareButton from '@/app/components/ShareButton';
 import ListingCard from '@/app/components/ListingCard';
+import { typeLabel, fieldTemplateFor } from '@/lib/propertyTypes';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }) {
   }
 
   const cover = listing.images?.find((img) => img.is_cover) || listing.images?.[0];
-  const description = `${listing.type === 'land' ? 'Land' : 'Apartment'} for ${
+  const description = `${typeLabel(listing.type)} for ${
     listing.purpose === 'rent' ? 'rent' : 'sale'
   } in ${listing.locality?.name || 'Tirupati'} — ${formatPrice(listing)}.`;
 
@@ -65,7 +66,7 @@ export default async function ListingDetailPage({ params }) {
           <span className="text-sm text-[var(--color-teal-deep)]">
             {listing.purpose === 'rent' ? 'For rent' : listing.purpose === 'lease' ? 'For lease' : 'For sale'}
             {' · '}
-            {listing.type === 'land' ? 'Land' : 'Apartment'}
+            {typeLabel(listing.type)}
           </span>
           <div className="flex items-start justify-between gap-3">
             <h1 className="font-display mt-1 text-3xl">{listing.title}</h1>
@@ -85,7 +86,7 @@ export default async function ListingDetailPage({ params }) {
             {listing.area_value && (
               <span>{listing.area_value} {listing.area_unit}</span>
             )}
-            {listing.type === 'apartment' && (
+            {fieldTemplateFor(listing.type) === 'building' && (
               <>
                 {listing.bedrooms != null && <span>{listing.bedrooms} BHK</span>}
                 {listing.bathrooms != null && <span>{listing.bathrooms} bath</span>}
@@ -96,7 +97,7 @@ export default async function ListingDetailPage({ params }) {
                 {listing.facing_direction && <span>{listing.facing_direction} facing</span>}
               </>
             )}
-            {listing.type === 'land' && (
+            {fieldTemplateFor(listing.type) === 'land' && (
               <>
                 {listing.plot_length && listing.plot_width && (
                   <span>{listing.plot_length} × {listing.plot_width} ft</span>
