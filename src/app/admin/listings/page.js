@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
 import { getMyProfile, getPendingListings, setListingStatus, revealOwnerPhone, logAdminAction } from '@/lib/queries';
-import { formatPrice } from '@/lib/format';
 import AdminNav from '@/app/components/AdminNav';
+import PendingListingCard from '@/app/components/PendingListingCard';
 
 export default function AdminListingsPage() {
   const { user, loading } = useAuth();
@@ -93,11 +93,12 @@ export default function AdminListingsPage() {
   if (profile?.role !== 'admin') return null;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-4xl px-6 py-12">
       <AdminNav />
       <h1 className="font-display text-3xl">Pending listings</h1>
       <p className="mt-2 text-[var(--color-ink-soft)]">
-        Approve a listing to make it publicly searchable, or reject it.
+        Review each listing, then approve it to make it publicly searchable, or reject it.
+        Use “Show full details” to see all photos, the description, and every field before deciding.
       </p>
 
       <div className="mt-8">
@@ -110,50 +111,14 @@ export default function AdminListingsPage() {
         ) : (
           <ul className="flex flex-col gap-4">
             {pending.map((listing) => (
-              <li
+              <PendingListingCard
                 key={listing.id}
-                className="border border-[var(--color-sand)] bg-[var(--color-surface)] p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-display text-lg">{listing.title}</p>
-                    <p className="text-sm text-[var(--color-ink-soft)]">
-                      {listing.type} · {listing.purpose} · {listing.locality?.name}
-                    </p>
-                    <p className="mt-1 text-[var(--color-brick)]">{formatPrice(listing)}</p>
-                    <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-                      Posted by {listing.owner?.full_name || 'Unknown'}
-                      {revealedPhones[listing.id] ? (
-                        ` · ${revealedPhones[listing.id]}`
-                      ) : (
-                        <button
-                          onClick={() => handleReveal(listing.id)}
-                          className="ml-1 underline hover:text-[var(--color-teal-deep)]"
-                        >
-                          reveal phone
-                        </button>
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 flex-col gap-2">
-                    <button
-                      disabled={actioningId === listing.id}
-                      onClick={() => handleAction(listing.id, 'live')}
-                      className="bg-[var(--color-teal)] px-4 py-1.5 text-sm text-[var(--color-surface)] transition-colors hover:bg-[var(--color-teal-deep)] disabled:opacity-60"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      disabled={actioningId === listing.id}
-                      onClick={() => handleAction(listing.id, 'rejected')}
-                      className="border border-[var(--color-sand)] px-4 py-1.5 text-sm text-[var(--color-ink)] transition-colors hover:border-[var(--color-brick)] hover:text-[var(--color-brick)] disabled:opacity-60"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              </li>
+                listing={listing}
+                revealedPhone={revealedPhones[listing.id]}
+                onReveal={handleReveal}
+                onAction={handleAction}
+                actioning={actioningId === listing.id}
+              />
             ))}
           </ul>
         )}

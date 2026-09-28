@@ -20,6 +20,7 @@ export async function getLocalities() {
 export async function searchListings({
   locality,
   type,
+  category,
   purpose,
   minPrice,
   maxPrice,
@@ -50,6 +51,10 @@ export async function searchListings({
 
   if (types.length === 1) query = query.eq('type', types[0]);
   else if (types.length > 1) query = query.in('type', types);
+
+  const categories = asArray(category);
+  if (categories.length === 1) query = query.eq('category', categories[0]);
+  else if (categories.length > 1) query = query.in('category', categories);
 
   if (purposes.length === 1) query = query.eq('purpose', purposes[0]);
   else if (purposes.length > 1) query = query.in('purpose', purposes);
@@ -206,9 +211,16 @@ export async function getPendingListings() {
   const { data, error } = await supabase
     .from('listings')
     .select(
-      `id, title, type, purpose, price, price_on_request, rent_amount,
-       area_value, area_unit, created_at, locality:localities(name),
-       owner:profiles!listings_owner_id_fkey(full_name)`
+      `id, title, description, type, category, purpose, price, price_on_request,
+       rent_amount, deposit_amount, area_value, area_unit, landmark,
+       latitude, longitude, created_at,
+       bedrooms, bathrooms, floor_number, total_floors, property_age_years,
+       facing_direction, furnishing, plot_length, plot_width, road_width_ft,
+       is_approved_layout,
+       locality:localities(name, mandal),
+       images:listing_images(r2_url, is_cover, sort_order),
+       amenities:listing_amenities(amenity:amenities(name)),
+       owner:profiles!listings_owner_id_fkey(full_name, agency_name, is_verified)`
     )
     .eq('status', 'pending_approval')
     .order('created_at', { ascending: true });
