@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
-import { getLocalities, getAmenities, createListing, uploadListingPhotos } from '@/lib/queries';
+import { getLocalities, getAmenities, createListing, uploadListingPhotos, getMyProjects } from '@/lib/queries';
 import LocationPicker from '@/app/components/LocationPicker';
 import { PROPERTY_TYPES, typesForCategory, fieldTemplateFor } from '@/lib/propertyTypes';
 
@@ -20,9 +20,11 @@ export default function NewListingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [photoFiles, setPhotoFiles] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const [form, setForm] = useState({
     category: 'residential',
+    project_id: '',
     type: 'apartment',
     purpose: 'sale',
     title: '',
@@ -61,6 +63,22 @@ export default function NewListingPage() {
     getAmenities().then(setAmenities).catch(() => {});
   }, []);
 
+  // A builder can attach a listing to one of their own projects. Only their
+  // own projects are offered here (the database enforces this too), and
+  // ?project=<id> from a project page's "Add a unit" button preselects one.
+  useEffect(() => {
+    if (!user) return;
+    getMyProjects(user.id)
+      .then((list) => {
+        setProjects(list);
+        const wanted = new URLSearchParams(window.location.search).get('project');
+        if (wanted && list.some((p) => p.id === wanted)) {
+          setForm((f) => ({ ...f, project_id: wanted }));
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
   }
@@ -82,6 +100,7 @@ export default function NewListingPage() {
 
     const payload = {
       category: form.category,
+      project_id: form.project_id || null,
       type: form.type,
       purpose: form.purpose,
       title: form.title,
@@ -191,6 +210,27 @@ export default function NewListingPage() {
             <option value="lease">For lease</option>
           </select>
         </div>
+
+        {projects.length > 0 && (
+          <div>
+            <label className="block text-sm text-[var(--color-ink-soft)]">Part of a project (optional)</label>
+            <select
+              value={form.project_id}
+              onChange={(e) => update('project_id', e.target.value)}
+              className="mt-1 w-full max-w-md border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
+            >
+              <option value="">Not part of a project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.project_name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-[var(--color-ink-softer)]">
+              Units in a project appear on the project page, which shows its RERA ID.
+            </p>
+          </div>
+        )}
 
         {/* Title + description */}
         <div>

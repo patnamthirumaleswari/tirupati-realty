@@ -11,6 +11,7 @@ const ACTION_LABELS = {
   reject_listing: 'Rejected listing',
   grant_verified: 'Granted Verified badge',
   remove_verified: 'Removed Verified badge',
+  delete_project: 'Deleted project',
 };
 
 function actionLabel(action) {

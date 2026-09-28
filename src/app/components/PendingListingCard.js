@@ -113,6 +113,11 @@ export default function PendingListingCard({
             {listing.locality?.name}
             {listing.locality?.mandal ? `, ${listing.locality.mandal}` : ''}
           </p>
+          {listing.project && (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              Unit in project: <strong>{listing.project.project_name}</strong>
+            </p>
+          )}
           <p className="mt-1 text-[var(--color-brick)]">
             {formatPrice(listing)}
             {listing.area_value ? (

@@ -4,9 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthProvider';
 import { createReport } from '@/lib/queries';
+import { useAuthModal } from '@/lib/AuthModalProvider';
 
 export default function ReportListingButton({ listingId }) {
   const { user } = useAuth();
+  const { authLinkProps } = useAuthModal();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -15,7 +17,11 @@ export default function ReportListingButton({ listingId }) {
 
   if (!user) {
     return (
-      <Link href="/login" className="text-xs text-[var(--color-ink-soft)] underline">
+      <Link
+        href="/login"
+        {...authLinkProps({ mode: 'login', message: 'Log in to report this listing.' })}
+        className="text-xs text-[var(--color-ink-soft)] underline"
+      >
         Log in to report this listing
       </Link>
     );

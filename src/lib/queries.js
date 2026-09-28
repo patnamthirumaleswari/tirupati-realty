@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { brochurePathFromUrl } from './format';
 
 // Active localities, alphabetical — used to populate the search dropdown.
 export async function getLocalities() {
@@ -35,7 +36,8 @@ export async function searchListings({
       `id, title, type, purpose, price, price_on_request, rent_amount,
        area_value, area_unit, bedrooms, latitude, longitude,
        locality:localities(id, name, mandal),
-       cover_image:listing_images(r2_url, is_cover)`,
+       cover_image:listing_images(r2_url, is_cover),
+       owner:profiles!listings_owner_id_fkey(is_verified)`,
       { count: 'exact' }
     )
     .eq('status', 'live');
@@ -91,9 +93,10 @@ export async function getFeaturedListings(limit = 6) {
   const { data, error } = await supabase
     .from('listings')
     .select(
-      `id, title, type, purpose, price, price_on_request, area_value, area_unit,
+      `id, title, type, purpose, price, price_on_request, rent_amount, area_value, area_unit,
        bedrooms, locality:localities(name, mandal),
-       cover_image:listing_images(r2_url, is_cover)`
+       cover_image:listing_images(r2_url, is_cover),
+       owner:profiles!listings_owner_id_fkey(is_verified)`
     )
     .eq('status', 'live')
     .order('created_at', { ascending: false })
@@ -220,6 +223,7 @@ export async function getPendingListings() {
        locality:localities(name, mandal),
        images:listing_images(r2_url, is_cover, sort_order),
        amenities:listing_amenities(amenity:amenities(name)),
+       project:builder_projects(project_name),
        owner:profiles!listings_owner_id_fkey(full_name, agency_name, is_verified)`
     )
     .eq('status', 'pending_approval')
@@ -273,6 +277,7 @@ export async function getListingById(id) {
        facing_direction, furnishing, plot_length, plot_width, road_width_ft,
        is_approved_layout, landmark, latitude, longitude, status, created_at,
        locality_id, locality:localities(name, mandal),
+       project:builder_projects(id, project_name, rera_id, possession_date),
        images:listing_images(r2_url, is_cover, sort_order),
        amenities:listing_amenities(amenity:amenities(name)),
        owner:profiles!listings_owner_id_fkey(full_name, agency_name, is_verified, avatar_url)`
@@ -491,7 +496,9 @@ export async function getMyFavoriteListings(userId) {
     .from('favorites')
     .select(
       `listing:listings(id, title, type, purpose, price, price_on_request, rent_amount,
-       locality:localities(name), cover_image:listing_images(r2_url, is_cover))`
+       area_value, area_unit, bedrooms,
+       locality:localities(name), cover_image:listing_images(r2_url, is_cover),
+       owner:profiles!listings_owner_id_fkey(is_verified))`
     )
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -727,7 +734,8 @@ export async function getSimilarListings(listing, limitCount = 4) {
       `id, title, type, purpose, price, price_on_request, rent_amount,
        area_value, area_unit, bedrooms,
        locality:localities(id, name, mandal),
-       cover_image:listing_images(r2_url, is_cover)`
+       cover_image:listing_images(r2_url, is_cover),
+       owner:profiles!listings_owner_id_fkey(is_verified)`
     )
     .eq('status', 'live')
     .neq('id', listing.id)
@@ -750,7 +758,8 @@ export async function getSimilarListings(listing, limitCount = 4) {
         `id, title, type, purpose, price, price_on_request, rent_amount,
          area_value, area_unit, bedrooms,
          locality:localities(id, name, mandal),
-         cover_image:listing_images(r2_url, is_cover)`
+         cover_image:listing_images(r2_url, is_cover),
+         owner:profiles!listings_owner_id_fkey(is_verified)`
       )
       .eq('status', 'live')
       .eq('type', listing.type)
@@ -793,4 +802,231 @@ export async function getAuditLog(limitCount = 100) {
 
   if (error) throw error;
   return data;
+}
+
+// How many live listings there are of each property type — used by the
+// homepage "browse by type" tiles. Reads just the type column; fine at this
+// scale (the API caps a single read at 1,000 rows, which is far above where
+// this site is).
+export async function getLiveListingCountsByType() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('type')
+    .eq('status', 'live');
+
+  if (error) throw error;
+
+  const counts = {};
+  for (const row of data) {
+    counts[row.type] = (counts[row.type] || 0) + 1;
+  }
+  return counts;
+}
+
+// Live listings that have a pinned map location, for the homepage map.
+export async function getMapPins(limitCount = 200) {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('id, title, purpose, price, price_on_request, rent_amount, latitude, longitude')
+    .eq('status', 'live')
+    .not('latitude', 'is', null)
+    .not('longitude', 'is', null)
+    .limit(limitCount);
+
+  if (error) throw error;
+  return data;
+}
+
+// --- Builder projects ---------------------------------------------------
+// One project (a development) with many units (listings) under it. Reading
+// is public; creating one needs a builder account (enforced by the database,
+// see 0013_builder_projects.sql).
+
+const PROJECT_FIELDS = `id, builder_id, project_name, rera_id, total_units, possession_date,
+       brochure_url, description, created_at,
+       builder:profiles!builder_projects_builder_id_fkey(full_name, agency_name, is_verified)`;
+
+export async function getProjects() {
+  const { data, error } = await supabase
+    .from('builder_projects')
+    .select(PROJECT_FIELDS)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getProjectById(id) {
+  const { data, error } = await supabase
+    .from('builder_projects')
+    .select(PROJECT_FIELDS)
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+// The current user's own projects (for the dashboard and the "part of a
+// project" choice on the listing form).
+export async function getMyProjects(userId) {
+  const { data, error } = await supabase
+    .from('builder_projects')
+    .select('id, project_name, rera_id, total_units, possession_date, brochure_url, description, created_at')
+    .eq('builder_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+// Live units per project, for the public pages. Only live listings are
+// visible to the public anyway, but filtering explicitly keeps the number
+// the same for a builder viewing their own projects.
+export async function getLiveUnitCountsByProject() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('project_id')
+    .eq('status', 'live')
+    .not('project_id', 'is', null);
+
+  if (error) throw error;
+
+  const counts = {};
+  for (const row of data) {
+    counts[row.project_id] = (counts[row.project_id] || 0) + 1;
+  }
+  return counts;
+}
+
+// A builder's own unit counts (every status, not just live) for their dashboard.
+export async function getMyUnitCounts(userId) {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('project_id')
+    .eq('owner_id', userId)
+    .not('project_id', 'is', null);
+
+  if (error) throw error;
+
+  const counts = {};
+  for (const row of data) {
+    counts[row.project_id] = (counts[row.project_id] || 0) + 1;
+  }
+  return counts;
+}
+
+// The live units of one project, with everything a listing card shows.
+export async function getProjectUnits(projectId) {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(
+      `id, title, type, purpose, price, price_on_request, rent_amount, area_value, area_unit,
+       bedrooms, locality:localities(name, mandal),
+       cover_image:listing_images(r2_url, is_cover),
+       owner:profiles!listings_owner_id_fkey(is_verified)`
+    )
+    .eq('project_id', projectId)
+    .eq('status', 'live')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createProject(fields) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('You must be logged in to create a project.');
+
+  const { data, error } = await supabase
+    .from('builder_projects')
+    .insert({ ...fields, builder_id: user.id })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateProject(id, fields) {
+  const { error } = await supabase.from('builder_projects').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+// Uploads a brochure or floor plan (PDF or image, up to 10 MB — the storage
+// bucket enforces both limits too) and returns its public URL.
+export async function uploadProjectBrochure(file) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('You must be logged in to upload a brochure.');
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `${user.id}/${crypto.randomUUID()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('project-brochures')
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('project-brochures').getPublicUrl(path);
+
+  return publicUrl;
+}
+
+// How many units (in any status) belong to a project. Only meaningful to the
+// project's builder or an admin, who are the only people who can see units
+// that are not live yet.
+export async function getProjectUnitCount(projectId) {
+  const { count, error } = await supabase
+    .from('listings')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', projectId);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+// Removes a brochure file from storage so it stops being reachable at its old
+// web address. Best effort: it never throws, because failing to tidy up a file
+// must not stop the change the person actually asked for.
+export async function removeBrochureFile(publicUrl) {
+  const path = brochurePathFromUrl(publicUrl);
+  if (!path) return;
+
+  try {
+    const { error } = await supabase.storage.from('project-brochures').remove([path]);
+    if (error) console.error('Could not remove the brochure file:', error);
+  } catch (err) {
+    console.error('Could not remove the brochure file:', err);
+  }
+}
+
+// Deletes a project. Its units are NOT deleted: the database detaches them
+// (see 0014_project_delete_detaches_units.sql), so they stay live as ordinary
+// listings. Pass the whole project so its brochure can be cleaned up too.
+export async function deleteProject(project) {
+  const { data, error } = await supabase
+    .from('builder_projects')
+    .delete()
+    .eq('id', project.id)
+    .select('id');
+
+  if (error) throw error;
+
+  // A delete the security rules refuse does not raise an error: it simply
+  // matches zero rows. Treat that as the failure it is, instead of letting
+  // the page announce a delete that never happened.
+  if (!data || data.length === 0) {
+    throw new Error('This project could not be deleted. It may already be gone, or you may not have permission.');
+  }
+
+  await removeBrochureFile(project.brochure_url);
 }

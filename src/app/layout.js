@@ -1,6 +1,7 @@
 import { Fraunces, Manrope } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/AuthProvider';
+import { AuthModalProvider } from '@/lib/AuthModalProvider';
 import { FavoritesProvider } from '@/lib/FavoritesProvider';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
@@ -48,11 +49,13 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${fraunces.variable} ${manrope.variable} flex min-h-screen flex-col`}>
         <AuthProvider>
-          <FavoritesProvider>
-            <Navbar />
-            <div className="flex-1">{children}</div>
-            <Footer />
-          </FavoritesProvider>
+          <AuthModalProvider>
+            <FavoritesProvider>
+              <Navbar />
+              <div className="flex-1">{children}</div>
+              <Footer />
+            </FavoritesProvider>
+          </AuthModalProvider>
         </AuthProvider>
       </body>
     </html>

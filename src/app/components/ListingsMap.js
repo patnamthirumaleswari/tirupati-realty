@@ -11,9 +11,12 @@ const ListingsMapInner = dynamic(() => import('@/app/components/ListingsMapInner
   ),
 });
 
-export default function ListingsMap({ pins }) {
+// heightClass lets a page pick how tall the map is. It has to be a complete,
+// literal Tailwind class (e.g. "h-[420px]") written out in the calling file,
+// or Tailwind will not generate the CSS for it.
+export default function ListingsMap({ pins, heightClass = 'h-[560px]' }) {
   return (
-    <div className="h-[560px] w-full overflow-hidden rounded-xl border border-[var(--color-sand)]">
+    <div className={`${heightClass} w-full overflow-hidden rounded-xl border border-[var(--color-sand)]`}>
       <ListingsMapInner pins={pins} />
     </div>
   );

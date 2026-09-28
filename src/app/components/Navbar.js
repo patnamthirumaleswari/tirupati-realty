@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthProvider';
 import { getMyProfile } from '@/lib/queries';
+import { useAuthModal } from '@/lib/AuthModalProvider';
 
 export default function Navbar() {
   const { user, loading } = useAuth();
+  const { authLinkProps } = useAuthModal();
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Only decides whether to SHOW the Admin link — the real protection is
@@ -68,16 +70,29 @@ export default function Navbar() {
           ) : (
             <>
               <div className="hidden items-center gap-1 border border-[var(--color-sand)] px-1 py-1 text-xs sm:flex">
-                <Link href="/login" className="px-2 py-1 text-[var(--color-ink-soft)] hover:text-[var(--color-teal)]">
+                <Link
+                  href="/login"
+                  {...authLinkProps({ mode: 'login' })}
+                  className="px-2 py-1 text-[var(--color-ink-soft)] hover:text-[var(--color-teal)]"
+                >
                   Log in
                 </Link>
                 <span className="text-[var(--color-sand)]">|</span>
-                <Link href="/signup" className="px-2 py-1 font-semibold text-[var(--color-teal)] hover:underline">
+                <Link
+                  href="/signup"
+                  {...authLinkProps({ mode: 'signup' })}
+                  className="px-2 py-1 font-semibold text-[var(--color-teal)] hover:underline"
+                >
                   Sign up
                 </Link>
               </div>
               <Link
                 href="/signup"
+                {...authLinkProps({
+                  mode: 'signup',
+                  message: 'Create a free account to post your property.',
+                  redirectTo: '/listings/new',
+                })}
                 className="whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-bold text-[var(--color-bg)] transition-transform hover:-translate-y-0.5"
                 style={{ background: 'var(--color-teal)' }}
               >

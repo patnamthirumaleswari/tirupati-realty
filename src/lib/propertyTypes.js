@@ -13,14 +13,14 @@
 
 export const PROPERTY_TYPES = [
   // Residential
-  { value: 'apartment', label: 'Apartment', category: 'residential', fieldTemplate: 'building' },
-  { value: 'villa', label: 'Independent House/Villa', category: 'residential', fieldTemplate: 'building' },
-  { value: 'builder_floor', label: 'Independent/Builder Floor', category: 'residential', fieldTemplate: 'building' },
-  { value: 'studio', label: 'Studio Apartment / 1 RK', category: 'residential', fieldTemplate: 'building' },
-  { value: 'land', label: 'Land / Plot', category: 'residential', fieldTemplate: 'land' },
+  { value: 'apartment', label: 'Apartment', shortLabel: 'Apartment', category: 'residential', fieldTemplate: 'building' },
+  { value: 'villa', label: 'Independent House/Villa', shortLabel: 'Villa', category: 'residential', fieldTemplate: 'building' },
+  { value: 'builder_floor', label: 'Independent/Builder Floor', shortLabel: 'Builder Floor', category: 'residential', fieldTemplate: 'building' },
+  { value: 'studio', label: 'Studio Apartment / 1 RK', shortLabel: 'Studio', category: 'residential', fieldTemplate: 'building' },
+  { value: 'land', label: 'Land / Plot', shortLabel: 'Land / Plot', category: 'residential', fieldTemplate: 'land' },
 
   // Commercial
-  { value: 'commercial_shop', label: 'Commercial Shop / Showroom', category: 'commercial', fieldTemplate: 'building' },
+  { value: 'commercial_shop', label: 'Commercial Shop / Showroom', shortLabel: 'Shop', category: 'commercial', fieldTemplate: 'building' },
 ];
 
 export function getPropertyType(value) {
@@ -29,6 +29,12 @@ export function getPropertyType(value) {
 
 export function typeLabel(value) {
   return getPropertyType(value)?.label || value;
+}
+
+// A short name for tight spaces (the badge on a listing card). The full
+// label is too long there and ends up on top of the favorite button.
+export function typeShortLabel(value) {
+  return getPropertyType(value)?.shortLabel || typeLabel(value);
 }
 
 export function fieldTemplateFor(value) {

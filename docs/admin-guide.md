@@ -75,12 +75,59 @@ the Pending Listings queue).
 A list of every registered account. For each user you can:
 
 - **Grant / Remove the "Verified" badge** — shows a green checkmark next to their name wherever it appears (their listings, their profile). Use this for agents/builders you've confirmed are legitimate.
-- **Change their role** — `user` (default), `agent`, `builder`, or `admin`. Changing someone to `admin` gives them full access to everything in this guide, so only do this for people you trust completely.
+- **Change their role** — `user` (default), `agent`, `builder`, or `admin`. Changing someone to `builder` lets them create projects (see "Builder accounts and projects" below). Changing someone to `admin` gives them full access to everything in this guide, so only do this for people you trust completely.
 - You cannot change your own role from this page (a safety measure to prevent accidentally locking yourself out of admin).
 
 **Not yet built:** there's no way to fully block/disable an account from here yet — that's a planned future addition. For now, the closest option is changing a problematic user's role, or asking Claude (or a developer) to disable the account directly in Supabase if truly necessary.
 
 ---
+
+## Builder accounts and projects
+
+A **project** groups all the units (flats, floors, plots) of one development under
+a single public page, with the builder's declared RERA ID, total units, possession
+date and an optional brochure or floor plan. Visitors can browse them at `/projects`
+(linked in the site footer as "New Projects").
+
+**Setting up a builder.** There is no self-service "become a builder" button yet, so
+this is done by an admin:
+1. Ask the builder to sign up normally first.
+2. Do a basic check, as the requirements document intends (a call-back, and business
+   proof for builders).
+3. In **Users**, change their role to `builder`, and grant the **Verified** badge if you
+   are satisfied. A "My Projects" tab then appears in their account, where they can
+   create a project and add units to it.
+
+**What is and isn't checked**
+- **Each unit is reviewed like any other listing.** A builder's units go through the
+  same pending queue. On the review card, a unit that belongs to a project shows
+  "Unit in project: ..." so you can see the connection.
+- **The RERA ID is declared, not verified.** The site shows it labelled as declared by
+  the builder and tells buyers to check it themselves on the Andhra Pradesh RERA
+  portal (rera.ap.gov.in). If a builder's RERA ID matters to your decision to verify
+  them, check it on that portal yourself.
+- **Projects themselves are not put through an approval queue.** Once a builder account
+  exists, a new project appears on the public site immediately (its units still need
+  approval). Granting the `builder` role is the point where you are deciding to trust
+  them. If a project should not be there (a mistake, spam, something fake), delete it,
+  as described below.
+- **A unit can only be added to its own builder's project.** The database enforces this,
+  so nobody can attach a listing to someone else's project.
+
+**Deleting a project**
+- A builder can delete their own project from its **Edit project** page (scroll to the
+  bottom). You can delete any project: open it while logged in as admin and use
+  **Edit or delete project (admin)**.
+- **Deleting a project does not delete its units.** They stay live as ordinary listings and
+  simply stop appearing under the project. The confirmation says how many units are
+  affected before anything happens.
+- The project page and its brochure file are removed permanently. This cannot be undone.
+- When you delete someone else's project, it is recorded in the **Audit log**.
+
+**Limits for now**
+- Brochures can be a PDF or image up to 10 MB. When a brochure is replaced or removed, the
+  old file is deleted from storage too.
+- A project can't be moved to a different builder from the site.
 
 ## Localities — `/admin/localities`
 
@@ -103,7 +150,8 @@ localities.
 ## Audit log — `/admin/audit-log`
 
 A read-only history of admin actions — who approved/rejected which
-listing, who granted a Verified badge, who changed whose role, and when.
+listing, who granted a Verified badge, who changed whose role, who deleted
+a project, and when.
 Useful if you ever need to answer "who did this, and when?" This is
 append-only: nothing here can be edited or deleted through the app.
 
@@ -112,7 +160,7 @@ append-only: nothing here can be edited or deleted through the app.
 ## Things that need a developer (not doable from the admin panel yet)
 
 - Fully blocking a user account
-- Managing builder/project listings (no UI exists yet)
+- Letting builders request their own builder account (today an admin has to change the role), and moving a project to a different builder
 - Telling an owner *why* a listing was rejected, or letting them resubmit it (not built yet)
 - Reliable email delivery to owners: approval, rejection, and new-inquiry emails currently go out from a shared test sender address. Until a sending domain is verified with the email provider (Resend), these emails may only reach the provider account's own address, so **don't rely on owners receiving them yet**. (The emails also tell owners to "contact support," and the site's contact email is still a placeholder.)
 - Restoring from a weekly backup (a developer/technical person needs to do this directly in Supabase)

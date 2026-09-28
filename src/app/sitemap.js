@@ -3,10 +3,15 @@ import { supabase } from '@/lib/supabaseClient';
 
 const SITE_URL = 'https://tirupati-realty.patnamthirumaleswari.workers.dev';
 
+// Built on each request instead of once at deploy time, so new listings and
+// projects reach search engines as soon as they are live.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap() {
   const staticRoutes = [
     { url: `${SITE_URL}/`, changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/listings`, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${SITE_URL}/projects`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/privacy-policy`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.2 },
   ];
@@ -26,5 +31,17 @@ export default async function sitemap() {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...listingRoutes];
+  // Project pages are public too.
+  const { data: projects } = await supabase
+    .from('builder_projects')
+    .select('id, created_at');
+
+  const projectRoutes = (projects || []).map((project) => ({
+    url: `${SITE_URL}/projects/${project.id}`,
+    lastModified: project.created_at,
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...listingRoutes, ...projectRoutes];
 }

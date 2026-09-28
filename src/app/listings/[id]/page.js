@@ -1,5 +1,6 @@
+import Link from 'next/link';
 import { getListingById, getSimilarListings, incrementViewCount } from '@/lib/queries';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatPossession } from '@/lib/format';
 import InquiryAccordion from '@/app/components/InquiryAccordion';
 import ReportListingButton from '@/app/components/ReportListingButton';
 import FavoriteButton from '@/app/components/FavoriteButton';
@@ -7,6 +8,7 @@ import RevealPhoneButton from '@/app/components/RevealPhoneButton';
 import ListingGallery from '@/app/components/ListingGallery';
 import ShareButton from '@/app/components/ShareButton';
 import ListingCard from '@/app/components/ListingCard';
+import ReraNote from '@/app/components/ReraNote';
 import { typeLabel, fieldTemplateFor } from '@/lib/propertyTypes';
 
 export async function generateMetadata({ params }) {
@@ -49,6 +51,7 @@ export default async function ListingDetailPage({ params }) {
   }
 
   const amenityNames = (listing.amenities || []).map((a) => a.amenity?.name).filter(Boolean);
+  const projectPossession = listing.project ? formatPossession(listing.project.possession_date) : null;
   const similarListings = await getSimilarListings(listing).catch(() => []);
 
   if (listing.status === 'live') {
@@ -107,6 +110,33 @@ export default async function ListingDetailPage({ params }) {
               </>
             )}
           </div>
+
+          {listing.project && (
+            <div className="mt-6 rounded-xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
+                Part of a project
+              </p>
+              <Link
+                href={`/projects/${listing.project.id}`}
+                className="font-display mt-1 block text-lg text-[var(--color-teal-deep)] hover:underline"
+              >
+                {listing.project.project_name}
+              </Link>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+                {listing.project.rera_id
+                  ? `RERA ID (declared by the builder): ${listing.project.rera_id}`
+                  : 'No RERA ID declared for this project.'}
+                {projectPossession ? ` · Possession ${projectPossession}` : ''}
+              </p>
+              {listing.project.rera_id && <ReraNote className="mt-2" />}
+              <Link
+                href={`/projects/${listing.project.id}`}
+                className="mt-3 inline-block text-sm font-semibold text-[var(--color-teal)] hover:underline"
+              >
+                View all units in this project →
+              </Link>
+            </div>
+          )}
 
           {listing.description && (
             <div className="mt-6">
@@ -175,7 +205,7 @@ export default async function ListingDetailPage({ params }) {
           </div>
 
           <p className="mt-4 text-xs leading-relaxed text-[var(--color-ink-softer)]">
-            Tirupati Realty is a listing platform, not a broker — we don't
+            Tirupati Realty is a listing platform, not a broker — we don&apos;t
             verify title, ownership, or approval status. Please do your own
             diligence before proceeding with any transaction.
           </p>

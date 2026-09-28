@@ -10,6 +10,7 @@ import {
   updateListing,
   updateListingAmenities,
   uploadListingPhotos,
+  getMyProjects,
 } from '@/lib/queries';
 import LocationPicker from '@/app/components/LocationPicker';
 import { typesForCategory, fieldTemplateFor } from '@/lib/propertyTypes';
@@ -32,6 +33,7 @@ export default function EditListingPage() {
   const [loadingListing, setLoadingListing] = useState(true);
   const [existingImages, setExistingImages] = useState([]);
   const [newPhotoFiles, setNewPhotoFiles] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const [form, setForm] = useState(null); // null until loaded
 
@@ -46,6 +48,11 @@ export default function EditListingPage() {
 
   useEffect(() => {
     if (!user) return;
+    getMyProjects(user.id).then(setProjects).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     getListingForEdit(listingId)
       .then((listing) => {
         if (listing.owner_id !== user.id) {
@@ -54,6 +61,7 @@ export default function EditListingPage() {
         }
         setForm({
           category: listing.category || 'residential',
+          project_id: listing.project_id || '',
           type: listing.type,
           purpose: listing.purpose,
           title: listing.title || '',
@@ -107,6 +115,7 @@ export default function EditListingPage() {
 
     const payload = {
       category: form.category,
+      project_id: form.project_id || null,
       type: form.type,
       purpose: form.purpose,
       title: form.title,
@@ -224,6 +233,24 @@ export default function EditListingPage() {
             <option value="lease">For lease</option>
           </select>
         </div>
+
+        {projects.length > 0 && (
+          <div>
+            <label className="block text-sm text-[var(--color-ink-soft)]">Part of a project (optional)</label>
+            <select
+              value={form.project_id}
+              onChange={(e) => update('project_id', e.target.value)}
+              className="mt-1 w-full max-w-md border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
+            >
+              <option value="">Not part of a project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.project_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Title + description */}
         <div>

@@ -4,18 +4,72 @@ import {
   getFeaturedListings,
   getLiveListingCount,
   getListingCountsByLocality,
+  getLiveListingCountsByType,
+  getMapPins,
 } from '@/lib/queries';
+import { formatPrice } from '@/lib/format';
+import { PROPERTY_TYPES } from '@/lib/propertyTypes';
 import ListingCard from '@/app/components/ListingCard';
+import ListingsMap from '@/app/components/ListingsMap';
+import PropertyTypeIcon from '@/app/components/PropertyTypeIcon';
+
+// This page shows live data (recent listings, counts, map pins). Without this
+// line Next.js builds the page once, at deploy time, and serves that frozen
+// copy, so a newly approved listing would not appear until the next deploy.
+export const dynamic = 'force-dynamic';
+
+// Only say things here that are true of the site as it works today. If
+// how phone numbers are revealed, or who can post, ever changes, update
+// the matching answer.
+const FAQ = [
+  {
+    q: 'Is it free to post a listing?',
+    a: 'Yes. Posting is free for individual owners, and there are no brokerage fees on Tirupati Realty.',
+  },
+  {
+    q: 'Who checks the listings?',
+    a: 'Every listing is reviewed by our team before it appears in search: we check that the details look complete and reasonable, and we remove spam. We do not verify legal title, ownership or government approvals, so please do your own checks before any transaction.',
+  },
+  {
+    q: 'How do I contact an owner?',
+    a: 'Open a listing and click Reveal Phone Number to see the owner\u2019s number, with a one-tap WhatsApp option, or send an inquiry from the same page. Numbers stay hidden until you ask for them.',
+  },
+  {
+    q: 'Do I need an account?',
+    a: 'You can browse, search and reveal an owner\u2019s phone number without one. You need an account to post a listing, save favorites, or report a listing.',
+  },
+  {
+    q: 'How do I report a suspicious listing?',
+    a: 'Open the listing and use Report this listing near the bottom of the page (you need to be logged in). Reports go to our review queue.',
+  },
+  {
+    q: 'Which areas do you cover?',
+    a: 'Tirupati and the areas around it, including Tiruchanur, Renigunta, Chandragiri and Srikalahasti.',
+  },
+];
 
 export default async function HomePage() {
-  const [localities, listings, liveCount, localityCounts] = await Promise.all([
+  // The type tiles and the map are optional extras: if either fails to
+  // load, that section quietly disappears rather than taking the whole
+  // homepage down with it.
+  const [localities, listings, liveCount, localityCounts, typeCounts, pins] = await Promise.all([
     getLocalities(),
     getFeaturedListings(6),
     getLiveListingCount(),
     getListingCountsByLocality(),
+    getLiveListingCountsByType().catch(() => ({})),
+    getMapPins().catch(() => []),
   ]);
 
   const topLocalities = localities.slice(0, 8);
+  const typeTiles = PROPERTY_TYPES.filter((t) => (typeCounts[t.value] || 0) > 0);
+  const mapPins = pins.map((l) => ({
+    id: l.id,
+    title: l.title,
+    lat: l.latitude,
+    lng: l.longitude,
+    priceLabel: formatPrice(l),
+  }));
 
   return (
     <main>
@@ -27,7 +81,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-3xl">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-sand)] bg-[var(--color-surface)] px-4 py-1.5 text-[13px] font-bold text-[var(--color-green)]">
             <span className="h-2 w-2 rounded-full" style={{ background: '#3E7A55' }} />
-            {liveCount} verified {liveCount === 1 ? 'listing' : 'listings'} live right now
+            {liveCount} {liveCount === 1 ? 'listing' : 'listings'} reviewed and live right now
           </div>
 
           <h1 className="font-display text-[40px] font-semibold leading-[1.1] text-[var(--color-ink)] md:text-[52px]">
@@ -65,11 +119,19 @@ export default async function HomePage() {
             <div className="hidden h-7 w-px bg-[var(--color-sand)] sm:block" />
             <select
               name="type"
-              className="hidden bg-transparent px-2 py-2 text-sm font-bold text-[var(--color-ink)] outline-none sm:block"
+              className="hidden w-40 bg-transparent px-2 py-2 text-sm font-bold text-[var(--color-ink)] outline-none sm:block"
             >
               <option value="">Any type</option>
-              <option value="land">Land / Plot</option>
-              <option value="apartment">Apartment</option>
+              <optgroup label="Residential">
+                {PROPERTY_TYPES.filter((t) => t.category === 'residential').map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Commercial">
+                {PROPERTY_TYPES.filter((t) => t.category === 'commercial').map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </optgroup>
             </select>
             <button
               type="submit"
@@ -136,6 +198,69 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Browse by property type: only types that have at least one live listing */}
+      {typeTiles.length > 0 && (
+        <section className="px-6 pb-16 md:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-6">
+              <div className="mb-1 text-[13px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-teal)' }}>
+                Find what fits
+              </div>
+              <h2 className="font-display text-[28px] font-semibold text-[var(--color-ink)]">
+                Browse by property type
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:justify-center">
+              {typeTiles.map((t) => {
+                const n = typeCounts[t.value];
+                return (
+                  <Link
+                    key={t.value}
+                    href={`/listings?type=${t.value}`}
+                    className="group flex flex-col items-center gap-3 rounded-2xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-5 text-center transition-all hover:-translate-y-1.5 hover:border-[var(--color-teal)] hover:shadow-[0_20px_40px_-18px_rgba(36,28,21,0.2)] sm:w-[190px]"
+                  >
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-bg2)] text-[var(--color-teal)] transition-colors group-hover:bg-[var(--color-teal)] group-hover:text-[var(--color-bg)]">
+                      <PropertyTypeIcon type={t.value} size={28} />
+                    </span>
+                    <span>
+                      <span className="block text-[14.5px] font-bold text-[var(--color-ink)]">{t.label}</span>
+                      <span className="block text-[12.5px] text-[var(--color-ink-softer)]">
+                        {n} {n === 1 ? 'listing' : 'listings'}
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Map: only shown once at least one live listing has a pinned location */}
+      {mapPins.length > 0 && (
+        <section className="px-6 pb-16 md:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <div className="mb-1 text-[13px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-teal)' }}>
+                  See where it is
+                </div>
+                <h2 className="font-display text-[28px] font-semibold text-[var(--color-ink)]">
+                  Explore listings on the map
+                </h2>
+              </div>
+              <Link href="/listings" className="text-sm font-bold text-[var(--color-teal)] hover:underline">
+                Search with filters →
+              </Link>
+            </div>
+            <ListingsMap pins={mapPins} heightClass="h-[420px]" />
+            <p className="mt-2 text-xs text-[var(--color-ink-softer)]">
+              Showing {mapPins.length} {mapPins.length === 1 ? 'listing' : 'listings'} with a pinned location. Click a pin for details.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Popular localities */}
       <section className="px-6 py-16 text-center md:px-8" style={{ background: 'var(--color-bg2)' }}>
         <div className="mx-auto max-w-6xl">
@@ -201,6 +326,32 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="px-6 py-16 md:px-8" style={{ background: 'var(--color-bg2)' }}>
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-2 text-center text-[13px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-teal)' }}>
+            Good to know
+          </div>
+          <h2 className="font-display mb-8 text-center text-[28px] font-semibold text-[var(--color-ink)]">
+            Frequently asked questions
+          </h2>
+          <div className="flex flex-col gap-3">
+            {FAQ.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-2xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-5"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15.5px] font-bold text-[var(--color-ink)] [&::-webkit-details-marker]:hidden">
+                  {item.q}
+                  <span className="text-xl leading-none text-[var(--color-teal)] transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-soft)]">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Trust */}
       <section className="px-6 py-14 md:px-8" style={{ background: 'var(--color-green)' }}>
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
@@ -211,7 +362,7 @@ export default async function HomePage() {
             },
             {
               title: 'Numbers stay masked',
-              body: 'A phone number is only shared once a visitor sends an inquiry — never shown publicly.',
+              body: 'A phone number stays hidden until a visitor clicks Reveal, and every reveal is logged. It is never shown publicly by default.',
             },
             {
               title: "Moderated before it's public",

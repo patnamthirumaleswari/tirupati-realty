@@ -21,6 +21,7 @@ export default function Footer() {
               <Link href="/listings?type=land" className="hover:text-[var(--color-bg)]">Land for Sale</Link>
               <Link href="/listings?purpose=rent" className="hover:text-[var(--color-bg)]">Apartments for Rent</Link>
               <Link href="/listings" className="hover:text-[var(--color-bg)]">All Listings</Link>
+              <Link href="/projects" className="hover:text-[var(--color-bg)]">New Projects</Link>
             </div>
           </div>
 

@@ -15,6 +15,9 @@ import {
   getMyLeads,
   getMyPhoneRevealCounts,
   getMyInquiryCounts,
+  getMyProfile,
+  getMyProjects,
+  getMyUnitCounts,
 } from '@/lib/queries';
 import { formatPrice } from '@/lib/format';
 import ListingCard from '@/app/components/ListingCard';
@@ -54,6 +57,9 @@ function DashboardContent() {
   const [leadsLoading, setLeadsLoading] = useState(true);
   const [revealCounts, setRevealCounts] = useState({});
   const [inquiryCounts, setInquiryCounts] = useState({});
+  const [role, setRole] = useState(null);
+  const [myProjects, setMyProjects] = useState([]);
+  const [unitCounts, setUnitCounts] = useState({});
   const [loggingOut, setLoggingOut] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
@@ -80,6 +86,9 @@ function DashboardContent() {
         .finally(() => setLeadsLoading(false));
       getMyPhoneRevealCounts(user.id).then(setRevealCounts).catch(() => {});
       getMyInquiryCounts(user.id).then(setInquiryCounts).catch(() => {});
+      getMyProfile().then((p) => setRole(p?.role || null)).catch(() => {});
+      getMyProjects(user.id).then(setMyProjects).catch(() => {});
+      getMyUnitCounts(user.id).then(setUnitCounts).catch(() => {});
       getMyPhone()
         .then((p) => {
           setPhone(p || '');
@@ -137,6 +146,9 @@ function DashboardContent() {
     await supabase.auth.signOut();
     router.push('/');
   }
+
+  // The Projects tab is for builder accounts (and admins), or anyone who already has a project.
+  const showProjectsTab = role === 'builder' || role === 'admin' || myProjects.length > 0;
 
   if (loading || !user) {
     return (
@@ -201,6 +213,18 @@ function DashboardContent() {
         >
           My Listings <span className="ml-1 text-xs">{myListings.length}</span>
         </button>
+        {showProjectsTab && (
+          <button
+            onClick={() => setTab('projects')}
+            className={`px-4 py-2 text-sm font-semibold ${
+              tab === 'projects'
+                ? 'border-b-2 border-[var(--color-teal)] text-[var(--color-teal-deep)]'
+                : 'text-[var(--color-ink-soft)]'
+            }`}
+          >
+            My Projects <span className="ml-1 text-xs">{myProjects.length}</span>
+          </button>
+        )}
         <button
           onClick={() => setTab('leads')}
           className={`px-4 py-2 text-sm font-semibold ${
@@ -295,6 +319,55 @@ function DashboardContent() {
                   </div>
                 </li>
               ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {tab === 'projects' && showProjectsTab && (
+        <div className="mt-6">
+          <div className="mb-4 flex justify-end">
+            <Link
+              href="/projects/new"
+              className="rounded-full bg-[var(--color-teal)] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[var(--color-teal-deep)]"
+            >
+              + New project
+            </Link>
+          </div>
+          {myProjects.length === 0 ? (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              You have not created a project yet. A project groups the units (flats, floors or
+              plots) of one development under a single page, with its RERA ID and brochure.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {myProjects.map((p) => {
+                const n = unitCounts[p.id] || 0;
+                return (
+                  <li
+                    key={p.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-4"
+                  >
+                    <div>
+                      <Link href={`/projects/${p.id}`} className="font-display hover:underline">
+                        {p.project_name}
+                      </Link>
+                      <p className="text-xs text-[var(--color-ink-softer)]">
+                        {n} {n === 1 ? 'unit' : 'units'} listed
+                        {p.rera_id ? ` · RERA ${p.rera_id}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex gap-4 text-xs font-semibold">
+                      <Link href={`/listings/new?project=${p.id}`} className="text-[var(--color-teal)] hover:underline">
+                        + Add unit
+                      </Link>
+                      <Link href={`/projects/${p.id}/edit`} className="text-[var(--color-teal)] hover:underline">
+                        Edit
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
