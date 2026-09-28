@@ -23,13 +23,35 @@ A row of tabs appears at the top of every admin page: **Pending listings | Repor
 ## Pending listings — `/admin/listings`
 
 This is the moderation queue. Every listing a user submits starts here,
-invisible to the public, until you act on it.
+invisible to the public, until you act on it. Oldest listings are shown first.
 
-For each pending listing you can:
-- **View its details** — click through to see the full listing as a visitor would
-- **Reveal the owner's phone number** — same secure, logged reveal a visitor would use
-- **Approve** — makes it publicly visible in search immediately
-- **Reject** — the owner sees it marked "Rejected" in their own account; it never goes public
+**At a glance, each listing shows:** a cover photo, the property type,
+locality, price and area, who posted it (with a ✓ Verified mark if you've
+granted them that badge), how long it's been waiting, and Approve / Reject
+buttons.
+
+**Click "Show full details" to review the whole listing before deciding:**
+- All photos (click one to enlarge). A listing with no photos is flagged in red.
+- The full description
+- Every detail filled in for that property type — area, bedrooms, plot size, road width, approved layout, and so on
+- The amenities chosen
+- A link to the pinned location on a map, and a link to open the listing exactly as a visitor would see it
+
+The Approve / Reject buttons are repeated at the bottom of the expanded view,
+so you can decide without scrolling back up.
+
+**Other actions**
+- **Reveal phone** — shows the owner's number so you can contact them if something needs clarifying. Every reveal is logged.
+- **Approve** — makes the listing visible in public search immediately.
+- **Reject** — the listing never goes public, and the owner sees it marked "Rejected".
+
+**Important: think before rejecting.** There is currently no way to tell the
+owner *why* a listing was rejected (the automatic email is generic), and a
+rejected listing cannot be edited or resubmitted by its owner — they would
+have to post a brand-new one. So if a listing just needs a small fix (a
+missing photo, an unclear price), it's usually better to contact the owner
+first. They can still edit it while it's pending, and you can approve it once
+it's fixed. Reserve Reject for spam, fake, or clearly inappropriate listings.
 
 What to check before approving:
 - Title and description make sense and aren't spam
@@ -91,6 +113,8 @@ append-only: nothing here can be edited or deleted through the app.
 
 - Fully blocking a user account
 - Managing builder/project listings (no UI exists yet)
+- Telling an owner *why* a listing was rejected, or letting them resubmit it (not built yet)
+- Reliable email delivery to owners: approval, rejection, and new-inquiry emails currently go out from a shared test sender address. Until a sending domain is verified with the email provider (Resend), these emails may only reach the provider account's own address, so **don't rely on owners receiving them yet**. (The emails also tell owners to "contact support," and the site's contact email is still a placeholder.)
 - Restoring from a weekly backup (a developer/technical person needs to do this directly in Supabase)
 - Changing site-wide text, legal pages, or design
 
