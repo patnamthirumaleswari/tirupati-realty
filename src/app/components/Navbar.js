@@ -1,10 +1,26 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthProvider';
+import { getMyProfile } from '@/lib/queries';
 
 export default function Navbar() {
   const { user, loading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Only decides whether to SHOW the Admin link — the real protection is
+  // each admin page's own role check plus database-level security, not
+  // this. Hiding the link is convenience, not the security mechanism.
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    getMyProfile()
+      .then((p) => setIsAdmin(p?.role === 'admin'))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--color-sand)] bg-[var(--color-bg)]/90 px-6 py-3 backdrop-blur md:px-8">
@@ -34,6 +50,9 @@ export default function Navbar() {
           <Link href="/listings" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Buy / Rent</Link>
           {!loading && user && (
             <Link href="/dashboard" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">My Account</Link>
+          )}
+          {!loading && isAdmin && (
+            <Link href="/admin/listings" className="text-[var(--color-teal-deep)] hover:text-[var(--color-teal)]">Admin</Link>
           )}
         </nav>
 
