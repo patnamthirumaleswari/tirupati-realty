@@ -9,9 +9,12 @@ import { supabase } from '@/lib/supabaseClient';
 // use an <h1> and the popup an <h2> (via headingAs) without duplicating
 // any markup.
 //
-//   onSuccess  called after a successful login
-//   onSwitch   popup only: switches to the signup form. On the page this
-//              is left out and the form links to /signup instead.
+//   onSuccess          called after a successful login
+//   onSwitch           popup only: switches to the signup form. On the page
+//                      this is left out and the form links to /signup instead.
+//   onForgotPassword   popup only: switches to the "forgot password" form.
+//                      On the page this is left out and the link below goes
+//                      to /forgot-password instead.
 //   message    optional line under the heading explaining why the visitor
 //              is being asked to log in (e.g. "Log in to save this listing")
 export default function LoginForm({
@@ -20,6 +23,7 @@ export default function LoginForm({
   message,
   onSuccess,
   onSwitch,
+  onForgotPassword,
 }) {
   // useId keeps the input ids unique even if a login form is ever on
   // screen twice (say, the popup opened over the /login page).
@@ -75,9 +79,24 @@ export default function LoginForm({
           />
         </div>
         <div>
-          <label className="block text-sm text-[var(--color-ink-soft)]" htmlFor={passwordId}>
-            Password
-          </label>
+          <div className="flex items-baseline justify-between">
+            <label className="block text-sm text-[var(--color-ink-soft)]" htmlFor={passwordId}>
+              Password
+            </label>
+            {onForgotPassword ? (
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-xs text-[var(--color-teal-deep)] underline"
+              >
+                Forgot password?
+              </button>
+            ) : (
+              <Link href="/forgot-password" className="text-xs text-[var(--color-teal-deep)] underline">
+                Forgot password?
+              </Link>
+            )}
+          </div>
           <input
             id={passwordId}
             type="password"

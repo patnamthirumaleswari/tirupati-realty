@@ -20,8 +20,8 @@ const AUTH_PAGES = ['/login', '/signup'];
 //
 //   <Link href="/login" {...authLinkProps({ mode: 'login' })}>Log in</Link>
 //
-// Options: mode ('login' | 'signup'), message (shown under the heading),
-// redirectTo (where to go after a successful login).
+// Options: mode ('login' | 'signup' | 'forgot'), message (shown under the
+// heading), redirectTo (where to go after a successful login).
 export function AuthModalProvider({ children }) {
   const { user } = useAuth();
   const pathname = usePathname();

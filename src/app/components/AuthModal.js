@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import LoginForm from '@/app/components/auth/LoginForm';
 import SignupForm from '@/app/components/auth/SignupForm';
+import ForgotPasswordForm from '@/app/components/auth/ForgotPasswordForm';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -124,19 +125,28 @@ export default function AuthModal({ initialMode = 'login', message, redirectTo, 
           ×
         </button>
 
-        {mode === 'login' ? (
+        {mode === 'login' && (
           <LoginForm
             headingAs="h2"
             headingId="auth-modal-title"
             message={message}
             onSuccess={handleLoginSuccess}
             onSwitch={() => setMode('signup')}
+            onForgotPassword={() => setMode('forgot')}
           />
-        ) : (
+        )}
+        {mode === 'signup' && (
           <SignupForm
             headingAs="h2"
             headingId="auth-modal-title"
             message={message}
+            onSwitch={() => setMode('login')}
+          />
+        )}
+        {mode === 'forgot' && (
+          <ForgotPasswordForm
+            headingAs="h2"
+            headingId="auth-modal-title"
             onSwitch={() => setMode('login')}
           />
         )}
