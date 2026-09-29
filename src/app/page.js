@@ -12,6 +12,8 @@ import { PROPERTY_TYPES } from '@/lib/propertyTypes';
 import ListingCard from '@/app/components/ListingCard';
 import ListingsMap from '@/app/components/ListingsMap';
 import PropertyTypeIcon from '@/app/components/PropertyTypeIcon';
+import ProjectCard from '@/app/components/ProjectCard';
+import { getProjects, getLiveUnitCountsByProject } from '@/lib/queries';
 
 // This page shows live data (recent listings, counts, map pins). Without this
 // line Next.js builds the page once, at deploy time, and serves that frozen
@@ -52,14 +54,20 @@ export default async function HomePage() {
   // The type tiles and the map are optional extras: if either fails to
   // load, that section quietly disappears rather than taking the whole
   // homepage down with it.
-  const [localities, listings, liveCount, localityCounts, typeCounts, pins] = await Promise.all([
-    getLocalities(),
-    getFeaturedListings(6),
-    getLiveListingCount(),
-    getListingCountsByLocality(),
-    getLiveListingCountsByType().catch(() => ({})),
-    getMapPins().catch(() => []),
-  ]);
+  const [localities, listings, liveCount, localityCounts, typeCounts, pins, projects, projectUnitCounts] =
+    await Promise.all([
+      getLocalities(),
+      getFeaturedListings(6),
+      getLiveListingCount(),
+      getListingCountsByLocality(),
+      getLiveListingCountsByType().catch(() => ({})),
+      getMapPins().catch(() => []),
+      getProjects().catch(() => []),
+      getLiveUnitCountsByProject().catch(() => ({})),
+    ]);
+
+  // Most recent 3 — getProjects() already orders newest first.
+  const featuredProjects = projects.slice(0, 3);
 
   const topLocalities = localities.slice(0, 8);
   const typeTiles = PROPERTY_TYPES.filter((t) => (typeCounts[t.value] || 0) > 0);
@@ -257,6 +265,36 @@ export default async function HomePage() {
             <p className="mt-2 text-xs text-[var(--color-ink-softer)]">
               Showing {mapPins.length} {mapPins.length === 1 ? 'listing' : 'listings'} with a pinned location. Click a pin for details.
             </p>
+          </div>
+        </section>
+      )}
+
+      {/* New projects: only shown once at least one project exists */}
+      {featuredProjects.length > 0 && (
+        <section className="px-6 pb-16 md:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <div className="mb-1 text-[13px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-teal)' }}>
+                  By local builders
+                </div>
+                <h2 className="font-display text-[28px] font-semibold text-[var(--color-ink)]">
+                  New projects
+                </h2>
+              </div>
+              <Link href="/projects" className="text-sm font-bold text-[var(--color-teal)] hover:underline">
+                View all projects →
+              </Link>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  liveUnits={projectUnitCounts[project.id] || 0}
+                />
+              ))}
+            </div>
           </div>
         </section>
       )}

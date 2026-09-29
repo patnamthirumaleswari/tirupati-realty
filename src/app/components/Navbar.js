@@ -50,6 +50,7 @@ export default function Navbar() {
         <nav className="hidden gap-6 text-sm font-semibold sm:flex">
           <Link href="/" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Home</Link>
           <Link href="/listings" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Buy / Rent</Link>
+          <Link href="/projects" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">Projects</Link>
           {!loading && user && (
             <Link href="/dashboard" className="text-[var(--color-ink)] hover:text-[var(--color-teal)]">My Account</Link>
           )}
