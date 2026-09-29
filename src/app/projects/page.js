@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getProjects, getLiveUnitCountsByProject } from '@/lib/queries';
 import ProjectCard from '@/app/components/ProjectCard';
 
@@ -18,11 +19,21 @@ export default async function ProjectsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12 md:px-8">
-      <h1 className="font-display text-3xl font-semibold text-[var(--color-ink)]">New projects</h1>
-      <p className="mt-2 max-w-2xl text-[var(--color-ink-soft)]">
-        Developments by local builders, each with its own page, declared RERA ID and the units
-        currently available.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-semibold text-[var(--color-ink)]">New projects</h1>
+          <p className="mt-2 max-w-2xl text-[var(--color-ink-soft)]">
+            Developments by local builders, each with its own page, declared RERA ID and the units
+            currently available.
+          </p>
+        </div>
+        <Link
+          href="/projects/new"
+          className="shrink-0 whitespace-nowrap rounded-full border border-[var(--color-sand)] px-5 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition-colors hover:border-[var(--color-teal)]"
+        >
+          Are you a builder?
+        </Link>
+      </div>
 
       {projects.length === 0 ? (
         <p className="mt-10 text-[var(--color-ink-soft)]">
