@@ -1030,3 +1030,59 @@ export async function deleteProject(project) {
 
   await removeBrochureFile(project.brochure_url);
 }
+
+// --- Builder account requests ---
+
+// The current user's own most recent request, or null if they've never
+// made one. Used to decide what /projects/new shows them: a request form,
+// a "pending" status, or nothing (already a builder).
+export async function getMyBuilderRequest(userId) {
+  const { data, error } = await supabase
+    .from('builder_requests')
+    .select('id, status, agency_name, message, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createBuilderRequest({ agencyName, message }) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('You must be logged in to request a builder account.');
+
+  const { error } = await supabase.from('builder_requests').insert({
+    user_id: user.id,
+    agency_name: agencyName,
+    message: message || null,
+  });
+
+  if (error) throw error;
+}
+
+// Admin: every pending request, oldest first (first come, first reviewed).
+export async function getPendingBuilderRequests() {
+  const { data, error } = await supabase
+    .from('builder_requests')
+    .select('id, agency_name, message, created_at, user:profiles!builder_requests_user_id_fkey(full_name)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function approveBuilderRequest(requestId) {
+  const { error } = await supabase.rpc('approve_builder_request', { p_request_id: requestId });
+  if (error) throw error;
+}
+
+export async function rejectBuilderRequest(requestId) {
+  const { error } = await supabase.rpc('reject_builder_request', { p_request_id: requestId });
+  if (error) throw error;
+}

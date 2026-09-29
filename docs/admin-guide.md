@@ -89,14 +89,20 @@ a single public page, with the builder's declared RERA ID, total units, possessi
 date and an optional brochure or floor plan. Visitors can browse them at `/projects`
 (linked in the site footer as "New Projects").
 
-**Setting up a builder.** There is no self-service "become a builder" button yet, so
-this is done by an admin:
-1. Ask the builder to sign up normally first.
-2. Do a basic check, as the requirements document intends (a call-back, and business
+**Setting up a builder.** People can now request this themselves:
+1. A logged-in user visits `/projects/new` and fills in "Request builder account"
+   (business name, and optionally a message about their business).
+2. It appears in **Builder requests** in this nav, oldest first.
+3. Do a basic check, as the requirements document intends (a call-back, and business
    proof for builders).
-3. In **Users**, change their role to `builder`, and grant the **Verified** badge if you
-   are satisfied. A "My Projects" tab then appears in their account, where they can
-   create a project and add units to it.
+4. Click **Approve**. This immediately changes their account's role to `builder` — a
+   "My Projects" tab then appears in their account, where they can create a project and
+   add units to it. Or click **Reject**; they can submit a new request afterward if they
+   want to.
+5. Consider also granting the **Verified** badge in **Users** if you're satisfied.
+
+You can still change someone's role to `builder` directly from **Users**, without them
+requesting it, the same as before.
 
 **What is and isn't checked**
 - **Each unit is reviewed like any other listing.** A builder's units go through the

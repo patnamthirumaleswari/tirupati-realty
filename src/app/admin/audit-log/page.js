@@ -12,6 +12,8 @@ const ACTION_LABELS = {
   grant_verified: 'Granted Verified badge',
   remove_verified: 'Removed Verified badge',
   delete_project: 'Deleted project',
+  approve_builder_request: 'Approved builder request',
+  reject_builder_request: 'Rejected builder request',
 };
 
 function actionLabel(action) {

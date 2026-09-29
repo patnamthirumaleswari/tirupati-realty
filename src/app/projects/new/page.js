@@ -4,14 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthProvider';
-import { getMyProfile } from '@/lib/queries';
+import { getMyProfile, getMyBuilderRequest } from '@/lib/queries';
 import ProjectForm from '@/app/components/ProjectForm';
+import BuilderRequestForm from '@/app/components/BuilderRequestForm';
 
 export default function NewProjectPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [role, setRole] = useState(null);
-  const [checkingRole, setCheckingRole] = useState(true);
+  const [myRequest, setMyRequest] = useState(null);
+  const [checking, setChecking] = useState(true);
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -19,38 +22,56 @@ export default function NewProjectPage() {
       router.push('/login');
       return;
     }
-    getMyProfile()
-      .then((p) => setRole(p?.role || null))
-      .catch(() => setRole(null))
-      .finally(() => setCheckingRole(false));
+    Promise.all([getMyProfile(), getMyBuilderRequest(user.id)])
+      .then(([profile, request]) => {
+        setRole(profile?.role || null);
+        setMyRequest(request);
+      })
+      .catch(() => {})
+      .finally(() => setChecking(false));
   }, [loading, user, router]);
 
-  if (loading || !user || checkingRole) return null;
+  if (loading || !user || checking) return null;
 
   // The database enforces this too; this page just explains it kindly
-  // instead of letting someone fill in a form that cannot be saved.
+  // instead of letting someone fill in a project form that cannot be saved.
   if (role !== 'builder' && role !== 'admin') {
+    const pending = !justSubmitted && myRequest?.status === 'pending';
+
     return (
       <main className="mx-auto max-w-xl px-6 py-16">
         <h1 className="font-display text-2xl">Projects are for builder accounts</h1>
         <p className="mt-3 text-[var(--color-ink-soft)]">
           A project groups all the units of one development under a single page, with its RERA ID
-          and brochure. If you are a builder or developer, contact us and we will set up your
-          account after a quick check.
+          and brochure.
         </p>
         <p className="mt-3 text-[var(--color-ink-soft)]">
           If you have a single property to sell or rent, you can{' '}
           <Link href="/listings/new" className="text-[var(--color-teal)] underline">
             list it directly
-          </Link>
-          .
+          </Link>{' '}
+          instead — no builder account needed.
         </p>
-        <Link
-          href="/contact"
-          className="mt-6 inline-block rounded-full bg-[var(--color-teal)] px-6 py-2.5 font-semibold text-[var(--color-surface)] hover:bg-[var(--color-teal-deep)]"
-        >
-          Contact us
-        </Link>
+
+        {pending || justSubmitted ? (
+          <div className="mt-6 rounded-xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-4">
+            <p className="font-semibold text-[var(--color-ink)]">Request submitted</p>
+            <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+              We&apos;ll review it and get back to you. You&apos;ll be able to create projects as
+              soon as it&apos;s approved.
+            </p>
+          </div>
+        ) : (
+          <>
+            {myRequest?.status === 'rejected' && (
+              <p className="mt-4 text-sm text-[var(--color-ink-soft)]">
+                Your previous request wasn&apos;t approved. You&apos;re welcome to submit a new one
+                below, for example with more detail about your business.
+              </p>
+            )}
+            <BuilderRequestForm onSubmitted={() => setJustSubmitted(true)} />
+          </>
+        )}
       </main>
     );
   }

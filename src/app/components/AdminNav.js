@@ -7,6 +7,7 @@ const LINKS = [
   { href: '/admin/listings', label: 'Pending listings' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/users', label: 'Users' },
+  { href: '/admin/builder-requests', label: 'Builder requests' },
   { href: '/admin/localities', label: 'Localities' },
   { href: '/admin/amenities', label: 'Amenities' },
   { href: '/admin/audit-log', label: 'Audit log' },
