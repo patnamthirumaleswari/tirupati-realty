@@ -688,7 +688,7 @@ export async function updateListingAmenities(id, amenityIds) {
 export async function getAllUsers() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, role, is_verified, agency_name, created_at')
+    .select('id, full_name, role, is_verified, is_blocked, agency_name, created_at')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -1084,5 +1084,14 @@ export async function approveBuilderRequest(requestId) {
 
 export async function rejectBuilderRequest(requestId) {
   const { error } = await supabase.rpc('reject_builder_request', { p_request_id: requestId });
+  if (error) throw error;
+}
+
+export async function setUserBlocked(userId, isBlocked) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_blocked: isBlocked })
+    .eq('id', userId);
+
   if (error) throw error;
 }

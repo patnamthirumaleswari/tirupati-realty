@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
-import { getMyProfile, getAllUsers, setUserVerified, setUserRole, logAdminAction } from '@/lib/queries';
+import { getMyProfile, getAllUsers, setUserVerified, setUserRole, setUserBlocked, logAdminAction } from '@/lib/queries';
 import AdminNav from '@/app/components/AdminNav';
 
 const ROLES = ['user', 'agent', 'builder', 'admin'];
@@ -59,6 +59,29 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleToggleBlocked(u) {
+    const action = u.is_blocked ? 'unblock' : 'block';
+    if (!u.is_blocked) {
+      const ok = confirm(
+        `Block ${u.full_name || 'this user'}? They'll still be able to log in, but won't be able to post or edit listings, send inquiries, file reports, reveal phone numbers, or create/edit builder projects.`
+      );
+      if (!ok) return;
+    }
+
+    setActioningId(u.id);
+    try {
+      await setUserBlocked(u.id, !u.is_blocked);
+      setUsers((prev) =>
+        prev.map((x) => (x.id === u.id ? { ...x, is_blocked: !x.is_blocked } : x))
+      );
+      logAdminAction(`${action}_user`, 'profiles', u.id);
+    } catch (err) {
+      alert(err.message || String(err));
+    } finally {
+      setActioningId(null);
+    }
+  }
+
   async function handleRoleChange(u, newRole) {
     if (newRole === u.role) return;
     if (!confirm(`Change ${u.full_name || 'this user'}'s role from "${u.role}" to "${newRole}"?`)) return;
@@ -95,7 +118,8 @@ export default function AdminUsersPage() {
       <h1 className="font-display text-3xl">Users</h1>
       <p className="mt-2 text-[var(--color-ink-soft)]">
         {users.length} registered {users.length === 1 ? 'user' : 'users'}. Grant the
-        Verified badge to trusted agents/builders, or change a user's role.
+        Verified badge to trusted agents/builders, change a user's role, or block someone
+        who's misusing the platform.
       </p>
 
       <input
@@ -116,13 +140,20 @@ export default function AdminUsersPage() {
             {filteredUsers.map((u) => (
               <li
                 key={u.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-sand)] bg-[var(--color-surface)] p-4"
+                className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
+                  u.is_blocked
+                    ? 'border-[var(--color-brick)] bg-[var(--color-brick)]/5'
+                    : 'border-[var(--color-sand)] bg-[var(--color-surface)]'
+                }`}
               >
                 <div>
                   <p className="font-semibold text-[var(--color-ink)]">
                     {u.full_name || 'Unnamed user'}
                     {u.is_verified && (
                       <span className="ml-2 text-xs text-[var(--color-teal-deep)]">✓ Verified</span>
+                    )}
+                    {u.is_blocked && (
+                      <span className="ml-2 text-xs font-bold text-[var(--color-brick)]">BLOCKED</span>
                     )}
                   </p>
                   {u.agency_name && (
@@ -158,6 +189,19 @@ export default function AdminUsersPage() {
                     }`}
                   >
                     {u.is_verified ? 'Remove Verified' : 'Grant Verified'}
+                  </button>
+
+                  <button
+                    disabled={actioningId === u.id || u.id === profile.id}
+                    onClick={() => handleToggleBlocked(u)}
+                    title={u.id === profile.id ? "You can't block your own account" : undefined}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${
+                      u.is_blocked
+                        ? 'border-[var(--color-teal)] text-[var(--color-teal-deep)]'
+                        : 'border-[var(--color-sand)] text-[var(--color-ink-soft)] hover:border-[var(--color-brick)] hover:text-[var(--color-brick)]'
+                    }`}
+                  >
+                    {u.is_blocked ? 'Unblock' : 'Block'}
                   </button>
                 </div>
               </li>
