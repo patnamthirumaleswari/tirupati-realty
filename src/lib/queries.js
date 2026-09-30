@@ -25,6 +25,10 @@ export async function searchListings({
   purpose,
   minPrice,
   maxPrice,
+  minBedrooms,
+  minArea,
+  maxArea,
+  verifiedOnly,
   keyword,
   sort,
   page = 1,
@@ -37,7 +41,7 @@ export async function searchListings({
        area_value, area_unit, bedrooms, latitude, longitude,
        locality:localities(id, name, mandal),
        cover_image:listing_images(r2_url, is_cover),
-       owner:profiles!listings_owner_id_fkey(is_verified)`,
+       owner:profiles!listings_owner_id_fkey!inner(is_verified)`,
       { count: 'exact' }
     )
     .eq('status', 'live');
@@ -63,6 +67,17 @@ export async function searchListings({
 
   if (minPrice) query = query.gte('price', Number(minPrice));
   if (maxPrice) query = query.lte('price', Number(maxPrice));
+
+  // "3 BHK and up" rather than an exact match — a 3-bedroom search
+  // shouldn't hide a 4-bedroom listing that would also satisfy the person.
+  if (minBedrooms) query = query.gte('bedrooms', Number(minBedrooms));
+
+  if (minArea) query = query.gte('area_value', Number(minArea));
+  if (maxArea) query = query.lte('area_value', Number(maxArea));
+
+  // Requires the owner embed above to use !inner (a plain left embed can't
+  // be filtered on) — safe here since every listing has a real owner.
+  if (verifiedOnly) query = query.eq('owner.is_verified', true);
 
   // Keyword search across title and description (case-insensitive,
   // partial match on either field).

@@ -3,6 +3,12 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+// Groups nearby pins into a single number-badge circle until zoomed in
+// close enough to tell them apart — without this, a locality with many
+// listings turns into an unreadable pile of overlapping markers.
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 // Leaflet's default marker icon paths break under bundlers like Turbopack
 // (they try to reference local image files that don't get bundled
@@ -32,13 +38,18 @@ export default function ListingsMapInner({ pins }) {
       maxZoom: 19,
     }).addTo(map);
 
+    const clusterGroup = L.markerClusterGroup({ maxClusterRadius: 50 });
+
     pins.forEach((pin) => {
-      const marker = L.marker([pin.lat, pin.lng]).addTo(map);
+      const marker = L.marker([pin.lat, pin.lng]);
       const safeTitle = pin.title.replace(/</g, '&lt;');
       marker.bindPopup(
         `<a href="/listings/${pin.id}" style="font-weight:600;">${safeTitle}</a><br/>${pin.priceLabel}`
       );
+      clusterGroup.addLayer(marker);
     });
+
+    map.addLayer(clusterGroup);
 
     if (pins.length > 0) {
       const bounds = L.latLngBounds(pins.map((p) => [p.lat, p.lng]));

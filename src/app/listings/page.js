@@ -23,6 +23,10 @@ export default async function ListingsPage({ searchParams }) {
   const selectedPurposes = toArray(params?.purpose);
   const minPrice = params?.minPrice || '';
   const maxPrice = params?.maxPrice || '';
+  const minBedrooms = params?.minBedrooms || '';
+  const minArea = params?.minArea || '';
+  const maxArea = params?.maxArea || '';
+  const verifiedOnly = params?.verifiedOnly === '1';
   const keyword = params?.keyword || '';
   const sort = params?.sort || 'newest';
   const page = Math.max(1, parseInt(params?.page, 10) || 1);
@@ -36,6 +40,10 @@ export default async function ListingsPage({ searchParams }) {
       purpose: selectedPurposes,
       minPrice,
       maxPrice,
+      minBedrooms,
+      minArea,
+      maxArea,
+      verifiedOnly,
       keyword,
       sort,
       page,
@@ -61,6 +69,10 @@ export default async function ListingsPage({ searchParams }) {
     selectedPurposes.forEach((v) => usp.append('purpose', v));
     if (minPrice) usp.set('minPrice', minPrice);
     if (maxPrice) usp.set('maxPrice', maxPrice);
+    if (minBedrooms) usp.set('minBedrooms', minBedrooms);
+    if (minArea) usp.set('minArea', minArea);
+    if (maxArea) usp.set('maxArea', maxArea);
+    if (verifiedOnly) usp.set('verifiedOnly', '1');
     if (keyword) usp.set('keyword', keyword);
     if (sort && sort !== 'newest') usp.set('sort', sort);
     if (page > 1) usp.set('page', String(page));
@@ -214,6 +226,65 @@ export default async function ListingsPage({ searchParams }) {
                     className="w-full border-b border-[var(--color-sand)] bg-transparent py-1.5 text-sm outline-none focus:border-[var(--color-teal)]"
                   />
                 </div>
+              </div>
+
+              {/* Bedrooms */}
+              <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
+                  Bedrooms
+                </p>
+                <select
+                  name="minBedrooms"
+                  defaultValue={minBedrooms}
+                  className="w-full border-b border-[var(--color-sand)] bg-transparent py-1.5 text-sm outline-none focus:border-[var(--color-teal)]"
+                >
+                  <option value="">Any</option>
+                  <option value="1">1+ BHK</option>
+                  <option value="2">2+ BHK</option>
+                  <option value="3">3+ BHK</option>
+                  <option value="4">4+ BHK</option>
+                </select>
+              </div>
+
+              {/* Area range */}
+              <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
+                  Area
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    name="minArea"
+                    defaultValue={minArea}
+                    placeholder="Min"
+                    className="w-full border-b border-[var(--color-sand)] bg-transparent py-1.5 text-sm outline-none focus:border-[var(--color-teal)]"
+                  />
+                  <span className="text-[var(--color-ink-softer)]">–</span>
+                  <input
+                    type="number"
+                    name="maxArea"
+                    defaultValue={maxArea}
+                    placeholder="Max"
+                    className="w-full border-b border-[var(--color-sand)] bg-transparent py-1.5 text-sm outline-none focus:border-[var(--color-teal)]"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-[var(--color-ink-softer)]">
+                  Compares raw numbers regardless of unit (sqft, acres, etc.) — most useful when
+                  your other filters narrow things to one property type.
+                </p>
+              </div>
+
+              {/* Verified owners only */}
+              <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="verifiedOnly"
+                    value="1"
+                    defaultChecked={verifiedOnly}
+                  />
+                  ✓ Verified owners only
+                </label>
               </div>
 
               {/* Locality */}
