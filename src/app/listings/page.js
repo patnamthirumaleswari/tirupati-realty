@@ -3,6 +3,7 @@ import ListingCard from '@/app/components/ListingCard';
 import ListingsViewToggle from '@/app/components/ListingsViewToggle';
 import { formatPrice } from '@/lib/format';
 import { PROPERTY_TYPES } from '@/lib/propertyTypes';
+import FilterDropdown from '@/app/components/FilterDropdown';
 
 export const metadata = {
   title: 'Search listings — Tirupati Realty',
@@ -101,7 +102,7 @@ export default async function ListingsPage({ searchParams }) {
             placeholder="Search by title or description…"
             className="flex-1 border-b border-[var(--color-sand)] bg-transparent py-2 text-sm outline-none focus:border-[var(--color-teal)]"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-[var(--color-ink)]">
             <label htmlFor="sort" className="text-xs font-semibold text-[var(--color-ink-softer)]">
               Sort
             </label>
@@ -148,7 +149,7 @@ export default async function ListingsPage({ searchParams }) {
                     { value: 'sale', label: 'Buy' },
                     { value: 'rent', label: 'Rent' },
                   ].map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2">
+                    <label key={opt.value} className="flex items-center gap-2 text-[var(--color-ink)]">
                       <input
                         type="checkbox"
                         name="purpose"
@@ -171,7 +172,7 @@ export default async function ListingsPage({ searchParams }) {
                     { value: 'residential', label: 'Residential' },
                     { value: 'commercial', label: 'Commercial' },
                   ].map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2">
+                    <label key={opt.value} className="flex items-center gap-2 text-[var(--color-ink)]">
                       <input
                         type="checkbox"
                         name="propcategory"
@@ -185,31 +186,26 @@ export default async function ListingsPage({ searchParams }) {
               </div>
 
               {/* Type */}
-              <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
-                  Property type
-                </p>
-                <div className="flex max-h-48 flex-col gap-2 overflow-y-auto text-sm">
-                  {PROPERTY_TYPES.map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="type"
-                        value={opt.value}
-                        defaultChecked={selectedTypes.includes(opt.value)}
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <FilterDropdown label="Property type" selectedCount={selectedTypes.length}>
+                {PROPERTY_TYPES.map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2 text-[var(--color-ink)]">
+                    <input
+                      type="checkbox"
+                      name="type"
+                      value={opt.value}
+                      defaultChecked={selectedTypes.includes(opt.value)}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </FilterDropdown>
 
               {/* Price range */}
               <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
                   Price (₹) — sale listings
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-[var(--color-ink)]">
                   <input
                     type="number"
                     name="minPrice"
@@ -251,7 +247,7 @@ export default async function ListingsPage({ searchParams }) {
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
                   Area
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-[var(--color-ink)]">
                   <input
                     type="number"
                     name="minArea"
@@ -276,7 +272,7 @@ export default async function ListingsPage({ searchParams }) {
 
               {/* Verified owners only */}
               <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
                   <input
                     type="checkbox"
                     name="verifiedOnly"
@@ -288,24 +284,19 @@ export default async function ListingsPage({ searchParams }) {
               </div>
 
               {/* Locality */}
-              <div className="mt-5 border-t border-[var(--color-sand)] pt-5">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-ink-softer)]">
-                  Locality
-                </p>
-                <div className="flex max-h-48 flex-col gap-2 overflow-y-auto text-sm">
-                  {localities.map((loc) => (
-                    <label key={loc.id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="locality"
-                        value={loc.id}
-                        defaultChecked={selectedLocalities.includes(loc.id)}
-                      />
-                      {loc.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <FilterDropdown label="Locality" selectedCount={selectedLocalities.length}>
+                {localities.map((loc) => (
+                  <label key={loc.id} className="flex items-center gap-2 text-[var(--color-ink)]">
+                    <input
+                      type="checkbox"
+                      name="locality"
+                      value={loc.id}
+                      defaultChecked={selectedLocalities.includes(loc.id)}
+                    />
+                    {loc.name}
+                  </label>
+                ))}
+              </FilterDropdown>
 
               <button
                 type="submit"

@@ -5,6 +5,7 @@ import { AuthModalProvider } from '@/lib/AuthModalProvider';
 import { FavoritesProvider } from '@/lib/FavoritesProvider';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
+import FeedbackButton from '@/app/components/FeedbackButton';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -54,6 +55,7 @@ export default function RootLayout({ children }) {
               <Navbar />
               <div className="flex-1">{children}</div>
               <Footer />
+              <FeedbackButton />
             </FavoritesProvider>
           </AuthModalProvider>
         </AuthProvider>

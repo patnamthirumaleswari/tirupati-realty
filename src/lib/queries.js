@@ -1110,3 +1110,45 @@ export async function setUserBlocked(userId, isBlocked) {
 
   if (error) throw error;
 }
+
+// --- Site feedback ---
+
+// Logged-in or not: user_id is filled in only when there's a real session,
+// matching the insert policy's check (user_id must match auth.uid(), or
+// both must be null for an anonymous sender).
+export async function submitSiteFeedback({ message, email, pageUrl }) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { error } = await supabase.from('site_feedback').insert({
+    user_id: user ? user.id : null,
+    email: email || null,
+    message,
+    page_url: pageUrl || null,
+  });
+
+  if (error) throw error;
+}
+
+// Admin: unread first (oldest first within each group), so the newest
+// unread thing is still seen promptly without older ones getting buried.
+export async function getSiteFeedback() {
+  const { data, error } = await supabase
+    .from('site_feedback')
+    .select('id, email, message, page_url, is_read, created_at, user:profiles!site_feedback_user_id_fkey(full_name)')
+    .order('is_read', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function markFeedbackRead(feedbackId, isRead = true) {
+  const { error } = await supabase
+    .from('site_feedback')
+    .update({ is_read: isRead })
+    .eq('id', feedbackId);
+
+  if (error) throw error;
+}

@@ -11,6 +11,7 @@ const LINKS = [
   { href: '/admin/localities', label: 'Localities' },
   { href: '/admin/amenities', label: 'Amenities' },
   { href: '/admin/audit-log', label: 'Audit log' },
+  { href: '/admin/feedback', label: 'Feedback' },
 ];
 
 export default function AdminNav() {
