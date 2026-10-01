@@ -33,6 +33,7 @@ export default function LoginForm({
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -97,15 +98,35 @@ export default function LoginForm({
               </Link>
             )}
           </div>
-          <input
-            id={passwordId}
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 outline-none focus:border-[var(--color-teal)]"
-          />
+          <div className="relative">
+            <input
+              id={passwordId}
+              type={showPassword ? 'text' : 'password'}
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 w-full border-b border-[var(--color-sand)] bg-transparent py-2 pr-9 outline-none focus:border-[var(--color-teal)]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[var(--color-ink-softer)] hover:text-[var(--color-ink)]"
+            >
+              {showPassword ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a13.6 13.6 0 0 1 4.22-5.44M9.9 4.24A10.9 10.9 0 0 1 12 4c5 0 9.27 3.11 11 7.5a13.5 13.5 0 0 1-1.67 2.68M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                  <path d="M1 1l22 22" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-7.5 11-7.5 11 7.5 11 7.5-4 7.5-11 7.5S1 12 1 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {error && <p className="text-sm text-[var(--color-brick)]">{error}</p>}
